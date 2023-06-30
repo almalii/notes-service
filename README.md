@@ -10,6 +10,11 @@ The NotesService project is developed using a multi-tier architecture, which ens
 
 ## API Endpoints
 
+### Authentication
+
+- **POST /login** - Logs in a user. Requires a JSON body with the following fields: `email` and `password`.
+- **POST /logout** - Logs out a user. Requires authentication using session.
+
 ### UserController
 
 - **POST /user/** - Creates a new user. Requires authentication using session.
