@@ -1,11 +1,11 @@
 package usecase
 
 import (
-	"bookmarks/note/models"
-	"bookmarks/note/service"
 	"context"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	"notes-rew/note/models"
+	"notes-rew/note/service"
 )
 
 type NoteService interface {

@@ -1,11 +1,11 @@
 package app
 
 import (
-	"bookmarks/internal/config"
-	"bookmarks/internal/db/postgres"
-	usersController "bookmarks/user/controller/handler"
 	"context"
 	"net/http"
+	"notes-rew/internal/config"
+	"notes-rew/internal/db/postgres"
+	usersController "notes-rew/user/controller/handler"
 	"os"
 	"os/signal"
 	"time"
@@ -14,13 +14,13 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/sirupsen/logrus"
 
-	notesController "bookmarks/note/controller/handler"
-	notesService "bookmarks/note/service"
-	notesStorage "bookmarks/note/storage"
-	notesUsecase "bookmarks/note/usecase"
-	usersService "bookmarks/user/service"
-	usersStorage "bookmarks/user/storage"
-	usersUsecase "bookmarks/user/usecase"
+	notesController "notes-rew/note/controller/handler"
+	notesService "notes-rew/note/service"
+	notesStorage "notes-rew/note/storage"
+	notesUsecase "notes-rew/note/usecase"
+	usersService "notes-rew/user/service"
+	usersStorage "notes-rew/user/storage"
+	usersUsecase "notes-rew/user/usecase"
 )
 
 type App struct {

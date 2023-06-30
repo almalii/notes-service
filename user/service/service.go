@@ -1,12 +1,12 @@
 package service
 
 import (
-	"bookmarks/internal/hash"
-	"bookmarks/user/models"
 	"context"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	"notes-rew/internal/hash"
+	"notes-rew/user/models"
 )
 
 type UserStorage interface {

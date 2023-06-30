@@ -1,8 +1,8 @@
 package storage
 
 import (
-	"bookmarks/user/models"
 	"github.com/google/uuid"
+	"notes-rew/user/models"
 	"time"
 )
 

@@ -1,12 +1,12 @@
 package usecase
 
 import (
-	"bookmarks/internal/hash"
-	"bookmarks/user/models"
-	"bookmarks/user/service"
 	"context"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	"notes-rew/internal/hash"
+	"notes-rew/user/models"
+	"notes-rew/user/service"
 )
 
 type UserService interface {

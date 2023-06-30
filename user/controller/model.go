@@ -1,9 +1,9 @@
 package controller
 
 import (
-	"bookmarks/user/usecase"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
+	"notes-rew/user/usecase"
 )
 
 type CreateUserRequest struct {

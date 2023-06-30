@@ -1,9 +1,9 @@
 package migrations
 
 import (
-	"bookmarks/internal/config"
 	"github.com/pressly/goose/v3"
 	"github.com/sirupsen/logrus"
+	"notes-rew/internal/config"
 )
 
 func RunMigrations(config *config.MigrationsConfig, command string) error {

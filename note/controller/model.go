@@ -4,8 +4,8 @@ import (
 	"errors"
 	"time"
 
-	"bookmarks/note/usecase"
 	"github.com/google/uuid"
+	"notes-rew/note/usecase"
 )
 
 type CreateNoteRequest struct {

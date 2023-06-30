@@ -1,10 +1,10 @@
 package handler
 
 import (
-	"bookmarks/internal/config"
 	"context"
 	"github.com/gorilla/sessions"
 	"net/http"
+	"notes-rew/internal/config"
 	"time"
 )
 

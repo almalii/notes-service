@@ -1,12 +1,12 @@
 package storage
 
 import (
-	"bookmarks/note/models"
-	"bookmarks/note/service"
 	"context"
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	"notes-rew/note/models"
+	"notes-rew/note/service"
 
 	"github.com/jackc/pgx/v5"
 )

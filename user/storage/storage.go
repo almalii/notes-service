@@ -1,14 +1,14 @@
 package storage
 
 import (
-	"bookmarks/user/service"
 	"context"
 	"github.com/sirupsen/logrus"
+	"notes-rew/user/service"
 
-	"bookmarks/user/models"
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"notes-rew/user/models"
 )
 
 type PSQLUserStorage struct {

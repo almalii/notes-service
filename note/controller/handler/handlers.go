@@ -1,9 +1,6 @@
 package handler
 
 import (
-	"bookmarks/note/controller"
-	"bookmarks/note/models"
-	"bookmarks/note/usecase"
 	"context"
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
@@ -11,6 +8,9 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/sirupsen/logrus"
 	"net/http"
+	"notes-rew/note/controller"
+	"notes-rew/note/models"
+	"notes-rew/note/usecase"
 	"time"
 )
 

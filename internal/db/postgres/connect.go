@@ -1,11 +1,11 @@
 package postgres
 
 import (
-	"bookmarks/internal/config"
 	"context"
 	"fmt"
 	"github.com/jackc/pgx/v5"
 	"github.com/sirupsen/logrus"
+	"notes-rew/internal/config"
 )
 
 func NewConnectionDB(ctx context.Context, c *config.DbConfig) (*pgx.Conn, error) {

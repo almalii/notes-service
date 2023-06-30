@@ -1,12 +1,12 @@
 package main
 
 import (
-	"bookmarks/app"
-	"bookmarks/internal/config"
 	"encoding/gob"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"log"
+	"notes-rew/app"
+	"notes-rew/internal/config"
 )
 
 func main() {

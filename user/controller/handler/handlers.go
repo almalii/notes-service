@@ -1,9 +1,6 @@
 package handler
 
 import (
-	"bookmarks/user/controller"
-	"bookmarks/user/models"
-	"bookmarks/user/usecase"
 	"context"
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
@@ -11,6 +8,9 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/sirupsen/logrus"
 	"net/http"
+	"notes-rew/user/controller"
+	"notes-rew/user/models"
+	"notes-rew/user/usecase"
 )
 
 type UserUsecase interface {

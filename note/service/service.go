@@ -1,9 +1,9 @@
 package service
 
 import (
-	"bookmarks/note/models"
 	"context"
 	"github.com/google/uuid"
+	"notes-rew/note/models"
 )
 
 type NoteStorage interface {

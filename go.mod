@@ -1,4 +1,4 @@
-module bookmarks
+module notes-rew
 
 go 1.20
 
