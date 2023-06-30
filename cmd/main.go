@@ -5,7 +5,6 @@ import (
 	"bookmarks/internal/config"
 	"encoding/gob"
 	"github.com/google/uuid"
-	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
 	"log"
 )
