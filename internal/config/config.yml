@@ -1,0 +1,19 @@
+db:
+  host: "localhost"
+  port: "5432"
+  username:
+  password:
+  dbname: "bookmarks"
+  sslmode: "disable"
+
+goose:
+    dir: "../internal/db/migrations/"
+    driver: "postgres"
+    dbstring: "postgresql://localhost:5432/bookmarks?sslmode=disable"
+
+server:
+  port: "8086"
+
+SALT_KEY: "b8a8be5c69248224cmv" # в переменную окружения
+
+SESSION_KEY: "20215131194292347011640767887127245" # в переменную окружения
