@@ -12,6 +12,7 @@ import (
 	"notes-rew/internal/auth/controller"
 	"notes-rew/internal/auth/models"
 	"notes-rew/internal/auth/usecase"
+	"notes-rew/internal/middlewares"
 	"strings"
 )
 
@@ -28,7 +29,7 @@ type AuthController struct {
 
 func (c *AuthController) Register(r chi.Router) {
 	r.Route("/auth", func(r chi.Router) {
-		r.Use(SessionMiddleware)
+		r.Use(middlewares.SessionMiddleware)
 		r.Post("/register", c.SignUpHandler)
 		r.Post("/login", c.SignInHandler)
 		r.Post("/logout", c.SignOutHandler)
@@ -183,5 +184,6 @@ func (c *AuthController) SignOutHandler(w http.ResponseWriter, r *http.Request) 
 func NewAuthController(usecase AuthUsecase, validator *validator.Validate) *AuthController {
 	return &AuthController{
 		usecase:   usecase,
-		validator: validator}
+		validator: validator,
+	}
 }

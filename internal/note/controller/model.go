@@ -11,7 +11,7 @@ import (
 type CreateNoteRequest struct {
 	Title string   `json:"title" validate:"required"`
 	Body  string   `json:"body" validate:"required"`
-	Tags  []string `json:"tags" validate:",omitempty"`
+	Tags  []string `json:"tags" validate:"omitempty"`
 }
 
 func (cnr CreateNoteRequest) ToDomain(uuid uuid.UUID) (usecase.CreateNoteInput, error) {

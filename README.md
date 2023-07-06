@@ -12,22 +12,22 @@ The NotesService project is developed using a multi-tier architecture, which ens
 
 ### Authentication
 
-- **POST /login** - Logs in a user. Requires a JSON body with the following fields: `email` and `password`.
-- **POST /logout** - Logs out a user. Requires authentication using session.
+- **POST /auth/login** - Logs in a user. Requires a JSON body with the following fields: `email` and `password`.
+- **POST /auth/register** - Registers a new user. Requires a JSON body with the following fields: `firstName`, `email`, `password`, `firstName`.
+- **POST /auth/logout** - Logs out a user. Requires authentication using session.
 
 ### UserController
 
-- **POST /user/** - Creates a new user. Requires authentication using session.
-- **GET /user/{id}** - Retrieves information about a user with the specified ID. Requires authentication using session.
-- **PUT /user/** - Updates user information. Requires authentication using session.
-- **DELETE /user/** - Deletes a user. Requires authentication using session.
+- **GET /users** - Retrieves information about a user with in session. Requires authentication using session.
+- **PUT /users** - Updates user information. Requires authentication using session.
+- **DELETE /users** - Deletes a user. Requires authentication using session.
 
 ### NoteController
 
-- **POST /note/** - Creates a new note. Requires authentication using session.
-- **GET /note/{id}** - Retrieves information about a note with the specified ID. Requires authentication using session.
-- **GET /note/all** - Retrieves a list of all notes. Requires authentication using session.
-- **PUT /note/{id}** - Updates information about a note with the specified ID. Requires authentication using session.
-- **DELETE /note/{id}** - Deletes a note with the specified ID. Requires authentication using session.
+- **POST /notes** - Creates a new note. Requires authentication using session.
+- **GET /notes/{id}** - Retrieves information about a note with the specified ID. Requires authentication using session.
+- **GET /notes** - Retrieves a list of all notes. Requires authentication using session.
+- **PUT /notes/{id}** - Updates information about a note with the specified ID. Requires authentication using session.
+- **DELETE /notes/{id}** - Deletes a note with the specified ID. Requires authentication using session.
 
 Please note that all endpoints requiring authentication utilize the SessionMiddleware middleware.

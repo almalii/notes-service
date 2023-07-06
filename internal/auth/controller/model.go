@@ -29,10 +29,8 @@ type SignUpRequest struct {
 }
 
 func (sur SignUpRequest) ToDomain(validate *validator.Validate) (usecase.UserInput, error) {
-	// TODO перенести создание валидатора в апп +
 	// TODO пернести валидацию в хендлер
-	err := validate.Struct(sur)
-	if err != nil {
+	if err := validate.Struct(sur); err != nil {
 		logrus.Error(err)
 		return usecase.UserInput{}, err.(validator.ValidationErrors)
 	}
@@ -50,8 +48,8 @@ type SignInRequest struct {
 }
 
 func (sir SignInRequest) ToDomain(validate *validator.Validate) (usecase.AuthInput, error) {
-	err := validate.Struct(sir)
-	if err != nil {
+
+	if err := validate.Struct(sir); err != nil {
 		logrus.Error(err)
 		return usecase.AuthInput{}, err.(validator.ValidationErrors)
 	}

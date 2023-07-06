@@ -35,6 +35,8 @@ type App struct {
 func NewApp() *App {
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
+	router.Use(middleware.Recoverer)
+	router.Use(middleware.Timeout(30 * time.Second))
 
 	connectDB, err := postgres.NewConnectionDB(context.Background(), config.NewDbConfig())
 	if err != nil {
@@ -85,6 +87,7 @@ func (a *App) Start(port string) error {
 	}()
 
 	logrus.Println("server started on port " + port)
+	logrus.SetFormatter(&logrus.JSONFormatter{})
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, os.Interrupt)

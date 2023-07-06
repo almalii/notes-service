@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/sirupsen/logrus"
 	"net/http"
+	"notes-rew/internal/middlewares"
 	"notes-rew/internal/user/controller"
 	"notes-rew/internal/user/models"
 	"notes-rew/internal/user/usecase"
@@ -30,7 +31,7 @@ type UserController struct {
 func (c *UserController) Register(r chi.Router) {
 
 	r.Route("/users", func(r chi.Router) {
-		r.Use(SessionMiddleware)
+		r.Use(middlewares.SessionMiddleware)
 		r.Get("/", c.GetUserHandler)
 		r.Put("/", c.UpdateUserHandler)
 		r.Delete("/", c.DeleteUserHandler)

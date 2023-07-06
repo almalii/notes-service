@@ -15,8 +15,7 @@ type UpdateUserRequest struct {
 
 func (uur UpdateUserRequest) ToDomain(id uuid.UUID, validate *validator.Validate) (usecase.UpdateUserInput, error) {
 	// TODO пернести валидацию в хендлер
-	err := validate.Struct(uur)
-	if err != nil {
+	if err := validate.Struct(uur); err != nil {
 		return usecase.UpdateUserInput{}, err.(validator.ValidationErrors)
 	}
 	emailToLower := strings.ToLower(*uur.Email)

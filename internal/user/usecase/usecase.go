@@ -35,7 +35,6 @@ func (u *UserUsecase) UpdateUser(ctx context.Context, req UpdateUserInput) error
 
 	// TODO check user can update user ( то есть это он )
 
-	// TODO mapping
 	userUpdate := NewUpdateUserToService(req.Username, req.Email, &hashedPassword)
 
 	err = u.service.UpdateUserByID(ctx, req.InitiatorID, userUpdate)
