@@ -28,10 +28,9 @@ type SignUpRequest struct {
 	Password string `json:"password" validate:"required,min=6,max=30"`
 }
 
-func (sur SignUpRequest) ToDomain() (usecase.UserInput, error) {
+func (sur SignUpRequest) ToDomain(validate *validator.Validate) (usecase.UserInput, error) {
 	// TODO перенести создание валидатора в апп
 	// TODO пернести валидацию в хендлер
-	validate := validator.New()
 	err := validate.Struct(sur)
 	if err != nil {
 		logrus.Error(err)
@@ -50,8 +49,7 @@ type SignInRequest struct {
 	Password string `json:"password" validate:"required,min=6,max=30"`
 }
 
-func (sir SignInRequest) ToDomain() (usecase.AuthInput, error) {
-	validate := validator.New()
+func (sir SignInRequest) ToDomain(validate *validator.Validate) (usecase.AuthInput, error) {
 	err := validate.Struct(sir)
 	if err != nil {
 		logrus.Error(err)

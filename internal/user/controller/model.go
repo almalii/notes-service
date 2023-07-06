@@ -8,9 +8,9 @@ import (
 )
 
 type UpdateUserRequest struct {
-	Username *string `json:"username" validate:"required,alpha,min=3,max=20"`
-	Email    *string `json:"email" validate:"required,email"`
-	Password *string `json:"password" validate:"required"`
+	Username *string `json:"username" validate:"required,alphanum,min=3,max=20"`
+	Email    *string `json:"email" validate:"required,email,min=5,max=254"`
+	Password *string `json:"password" validate:"required,min=6,max=30"`
 }
 
 func (uur UpdateUserRequest) ToDomain(id uuid.UUID) (usecase.UpdateUserInput, error) {

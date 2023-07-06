@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
 	"github.com/sirupsen/logrus"
@@ -21,7 +22,8 @@ type AuthUsecase interface {
 }
 
 type AuthController struct {
-	usecase AuthUsecase
+	usecase   AuthUsecase
+	validator *validator.Validate
 }
 
 func (c *AuthController) Register(r chi.Router) {
@@ -64,7 +66,7 @@ func (c *AuthController) SignUpHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	domain, err := req.ToDomain()
+	domain, err := req.ToDomain(c.validator)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -123,7 +125,7 @@ func (c *AuthController) SignInHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	domain, err := req.ToDomain()
+	domain, err := req.ToDomain(c.validator)
 	if err != nil {
 		logrus.Errorf("error converting to domain: %v", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -131,13 +133,14 @@ func (c *AuthController) SignInHandler(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := c.usecase.AuthenticateUser(r.Context(), domain)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "password is not correct", http.StatusInternalServerError)
 		return
 	}
 
 	session.Values["userID"] = resp.ID
 	err = session.Save(r, w)
 	if err != nil {
+		logrus.Errorf("error saving session: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -169,6 +172,7 @@ func (c *AuthController) SignOutHandler(w http.ResponseWriter, r *http.Request) 
 
 	err := session.Save(r, w)
 	if err != nil {
+		logrus.Errorf("error saving session: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -176,6 +180,8 @@ func (c *AuthController) SignOutHandler(w http.ResponseWriter, r *http.Request) 
 	w.WriteHeader(http.StatusOK)
 }
 
-func NewAuthController(usecase AuthUsecase) *AuthController {
-	return &AuthController{usecase: usecase}
+func NewAuthController(usecase AuthUsecase, validator *validator.Validate) *AuthController {
+	return &AuthController{
+		usecase:   usecase,
+		validator: validator}
 }

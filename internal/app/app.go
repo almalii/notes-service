@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"github.com/go-playground/validator/v10"
 	"net/http"
 	authController "notes-rew/internal/auth/controller/handler"
 	authService "notes-rew/internal/auth/service"
@@ -38,6 +39,7 @@ func NewApp() *App {
 	if err != nil {
 		logrus.Print(err)
 	}
+	validation := validator.New()
 
 	noteStorage := notesStorage.NewNoteStorage(connectDB)
 	noteService := notesService.NewNoteService(noteStorage)
@@ -54,7 +56,7 @@ func NewApp() *App {
 	authsStorage := authStorage.NewUserStorage(connectDB)
 	authsService := authService.NewAuthService(authsStorage)
 	authsUsecase := authUsecase.NewAuthUsecase(authsService)
-	authsController := authController.NewAuthController(authsUsecase)
+	authsController := authController.NewAuthController(authsUsecase, validation)
 	authsController.Register(router)
 
 	return &App{router: router}
