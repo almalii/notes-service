@@ -17,10 +17,11 @@ type AuthService interface {
 
 type AuthUsecase struct {
 	service AuthService
+	hasher  hash.Hasher
 }
 
 func (u *AuthUsecase) CreateUser(ctx context.Context, req UserInput) (uuid.UUID, error) {
-	hashedPassword, err := hash.HasherPassword(req.Password)
+	hashedPassword, err := u.hasher.HasherPassword(req.Password)
 	if err != nil {
 		logrus.Errorf("hash password error: %s", err)
 	}
@@ -43,7 +44,7 @@ func (u *AuthUsecase) AuthenticateUser(ctx context.Context, req AuthInput) (mode
 		return models.AuthResponse{}, err
 	}
 
-	if err = hash.ComparePassword(user.PasswordHash, req.Password); err != nil {
+	if err = u.hasher.ComparePassword(user.PasswordHash, req.Password); err != nil {
 		logrus.Errorf("password is not correct: %s", err)
 		return models.AuthResponse{}, err
 	}
@@ -54,6 +55,9 @@ func (u *AuthUsecase) CheckUserByEmail(ctx context.Context, email string) (bool,
 	return u.service.CheckerByEmail(ctx, email)
 }
 
-func NewAuthUsecase(service AuthService) *AuthUsecase {
-	return &AuthUsecase{service: service}
+func NewAuthUsecase(service AuthService, hasher hash.Hasher) *AuthUsecase {
+	return &AuthUsecase{
+		service: service,
+		hasher:  hasher,
+	}
 }

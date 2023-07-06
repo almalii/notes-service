@@ -13,9 +13,7 @@ type UpdateUserRequest struct {
 	Password *string `json:"password" validate:"required,min=6,max=30"`
 }
 
-func (uur UpdateUserRequest) ToDomain(id uuid.UUID) (usecase.UpdateUserInput, error) {
-	// TODO перенести создание валидатора в апп
-	validate := validator.New()
+func (uur UpdateUserRequest) ToDomain(id uuid.UUID, validate *validator.Validate) (usecase.UpdateUserInput, error) {
 	// TODO пернести валидацию в хендлер
 	err := validate.Struct(uur)
 	if err != nil {

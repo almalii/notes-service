@@ -10,6 +10,7 @@ import (
 	authUsecase "notes-rew/internal/auth/usecase"
 	"notes-rew/internal/config"
 	"notes-rew/internal/db/postgres"
+	"notes-rew/internal/hash"
 	notesController "notes-rew/internal/note/controller/handler"
 	notesService "notes-rew/internal/note/service"
 	notesStorage "notes-rew/internal/note/storage"
@@ -37,9 +38,12 @@ func NewApp() *App {
 
 	connectDB, err := postgres.NewConnectionDB(context.Background(), config.NewDbConfig())
 	if err != nil {
-		logrus.Print(err)
+		logrus.Errorf("Failed to connect to DB: %+v", err)
+		os.Exit(1)
 	}
+
 	validation := validator.New()
+	hasher := hash.NewPasswordHasher(config.SaltKey())
 
 	noteStorage := notesStorage.NewNoteStorage(connectDB)
 	noteService := notesService.NewNoteService(noteStorage)
@@ -49,13 +53,13 @@ func NewApp() *App {
 
 	userStorage := usersStorage.NewPSQLUserStorage(connectDB)
 	userService := usersService.NewUserService(userStorage)
-	userUsecase := usersUsecase.NewUserUsecase(userService)
-	userController := usersController.NewUserController(userUsecase)
+	userUsecase := usersUsecase.NewUserUsecase(userService, hasher)
+	userController := usersController.NewUserController(userUsecase, validation)
 	userController.Register(router)
 
 	authsStorage := authStorage.NewUserStorage(connectDB)
 	authsService := authService.NewAuthService(authsStorage)
-	authsUsecase := authUsecase.NewAuthUsecase(authsService)
+	authsUsecase := authUsecase.NewAuthUsecase(authsService, hasher)
 	authsController := authController.NewAuthController(authsUsecase, validation)
 	authsController.Register(router)
 

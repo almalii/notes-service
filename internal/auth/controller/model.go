@@ -29,7 +29,7 @@ type SignUpRequest struct {
 }
 
 func (sur SignUpRequest) ToDomain(validate *validator.Validate) (usecase.UserInput, error) {
-	// TODO перенести создание валидатора в апп
+	// TODO перенести создание валидатора в апп +
 	// TODO пернести валидацию в хендлер
 	err := validate.Struct(sur)
 	if err != nil {

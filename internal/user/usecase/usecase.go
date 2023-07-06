@@ -20,6 +20,7 @@ type UserService interface {
 
 type UserUsecase struct {
 	service UserService
+	hasher  hash.Hasher
 }
 
 func (u *UserUsecase) ReadUser(ctx context.Context, id uuid.UUID) (models.UserOutput, error) {
@@ -27,7 +28,7 @@ func (u *UserUsecase) ReadUser(ctx context.Context, id uuid.UUID) (models.UserOu
 }
 
 func (u *UserUsecase) UpdateUser(ctx context.Context, req UpdateUserInput) error {
-	hashedPassword, err := hash.HasherPassword(*req.Password)
+	hashedPassword, err := u.hasher.HasherPassword(*req.Password)
 	if err != nil {
 		logrus.Errorf("hash password error: %s", err)
 	}
@@ -54,8 +55,9 @@ func (u *UserUsecase) CheckUserByEmail(ctx context.Context, email string) (bool,
 	return u.service.CheckerByEmail(ctx, email)
 }
 
-func NewUserUsecase(service UserService) *UserUsecase {
+func NewUserUsecase(service UserService, hasher hash.Hasher) *UserUsecase {
 	return &UserUsecase{
 		service: service,
+		hasher:  hasher,
 	}
 }

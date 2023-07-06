@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
 	"github.com/sirupsen/logrus"
@@ -22,7 +23,8 @@ type UserUsecase interface {
 }
 
 type UserController struct {
-	usecase UserUsecase
+	usecase   UserUsecase
+	validator *validator.Validate
 }
 
 func (c *UserController) Register(r chi.Router) {
@@ -110,7 +112,7 @@ func (c *UserController) UpdateUserHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	domain, err := req.ToDomain(currentUserID)
+	domain, err := req.ToDomain(currentUserID, c.validator)
 	if err != nil {
 		logrus.Errorf("error converting to domain: %v", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -173,8 +175,9 @@ func (c *UserController) DeleteUserHandler(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func NewUserController(usecase UserUsecase) *UserController {
+func NewUserController(usecase UserUsecase, validate *validator.Validate) *UserController {
 	return &UserController{
-		usecase: usecase,
+		usecase:   usecase,
+		validator: validate,
 	}
 }
