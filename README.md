@@ -13,7 +13,7 @@ The NotesService project is developed using a multi-tier architecture, which ens
 ### Authentication
 
 - **POST /auth/login** - Logs in a user. Requires a JSON body with the following fields: `email` and `password`.
-- **POST /auth/register** - Registers a new user. Requires a JSON body with the following fields: `firstName`, `email`, `password`, `firstName`.
+- **POST /auth/register** - Registers a new user. Requires a JSON body with the following fields: `firstName`, `email`, `password`.
 - **POST /auth/logout** - Logs out a user. Requires authentication using session.
 
 ### UserController
