@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
@@ -41,15 +42,27 @@ func NewMigrationsConfig() *MigrationsConfig {
 func ServerPort() string {
 	port := viper.GetString("server.port")
 	if port == "" {
-		return "server.port is empty"
+		logrus.Error("server.port is empty")
+		return ""
 	}
 	return port
 }
 
 func SessionKey() string {
-	session := viper.GetString("SESSION_KEY")
-	if session == "" {
-		return "SESSION_KEY is empty"
-	}
+	session := viper.GetString("session")
+	//if session == "" {
+	//	logrus.Error("session key is empty")
+	//	return ""
+	//}
 	return session
+}
+
+func SaltKey() string {
+	salt := viper.GetString("salt")
+	if salt == "" {
+		logrus.Error("salt is empty")
+		return ""
+	}
+
+	return salt
 }

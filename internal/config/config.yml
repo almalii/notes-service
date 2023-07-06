@@ -5,6 +5,7 @@ db:
   password:
   dbname: "bookmarks"
   sslmode: "disable"
+  driver: "postgres"
 
 goose:
     dir: "../internal/db/migrations/"
@@ -14,6 +15,6 @@ goose:
 server:
   port: "8086"
 
-SALT_KEY: "b8a8be5c69248224cmv" # в переменную окружения
+salt: "b8a8be5c69248224cmv" # в переменную окружения
 
-SESSION_KEY: "20215131194292347011640767887127245" # в переменную окружения
+session: "20215131194292347011640767887127245" # в переменную окружения

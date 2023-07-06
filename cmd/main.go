@@ -5,7 +5,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"log"
-	"notes-rew/app"
+	"notes-rew/internal/app"
 	"notes-rew/internal/config"
 )
 

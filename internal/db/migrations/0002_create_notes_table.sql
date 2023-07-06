@@ -8,6 +8,3 @@ CREATE TABLE IF NOT EXISTS notes (
 	created_at TIMESTAMP NOT NULL,
 	updated_at TIMESTAMP NOT NULL
 );
-
--- +goose Down
-DROP TABLE IF EXISTS notes;
