@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/go-playground/validator/v10"
 	"net/http"
-	authController "notes-rew/internal/auth/controller/handler"
+	authController "notes-rew/internal/auth/controller/rest/handler"
 	authService "notes-rew/internal/auth/service"
 	authStorage "notes-rew/internal/auth/storage"
 	authUsecase "notes-rew/internal/auth/usecase"
@@ -19,6 +19,7 @@ import (
 	usersService "notes-rew/internal/user/service"
 	usersStorage "notes-rew/internal/user/storage"
 	usersUsecase "notes-rew/internal/user/usecase"
+	"notes-rew/internal/validators"
 	"os"
 	"os/signal"
 	"time"
@@ -45,12 +46,13 @@ func NewApp() *App {
 	}
 
 	validation := validator.New()
+	validators.RegisterCustomValidation(validation)
 	hasher := hash.NewPasswordHasher(config.SaltKey())
 
 	noteStorage := notesStorage.NewNoteStorage(connectDB)
 	noteService := notesService.NewNoteService(noteStorage)
 	noteUsecase := notesUsecase.NewNoteUsecase(noteService)
-	noteController := notesController.NewNoteController(noteUsecase)
+	noteController := notesController.NewNoteController(noteUsecase, validation)
 	noteController.Register(router)
 
 	userStorage := usersStorage.NewPSQLUserStorage(connectDB)

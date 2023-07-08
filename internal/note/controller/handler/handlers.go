@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
 	"github.com/sirupsen/logrus"
@@ -23,7 +24,8 @@ type NoteUsecase interface {
 }
 
 type NoteController struct {
-	usecase NoteUsecase
+	usecase   NoteUsecase
+	validator *validator.Validate
 }
 
 func (c *NoteController) Register(r chi.Router) {
@@ -63,7 +65,7 @@ func (c *NoteController) CreateNoteHandler(w http.ResponseWriter, r *http.Reques
 	}
 	defer r.Body.Close()
 
-	domain, err := req.ToDomain(currentUserID)
+	domain, err := req.ToDomain(currentUserID, c.validator)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -75,8 +77,10 @@ func (c *NoteController) CreateNoteHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	resp := controller.NoteResponseId{
-		ID: noteID,
+	resp := controller.NoteResponse{
+		ID:    noteID,
+		Title: domain.Title,
+		Body:  domain.Body,
 	}
 
 	w.WriteHeader(http.StatusCreated)
@@ -212,7 +216,7 @@ func (c *NoteController) UpdateNoteHandler(w http.ResponseWriter, r *http.Reques
 	}
 	defer r.Body.Close()
 
-	domain, err := req.ToDomain()
+	domain, err := req.ToDomain(c.validator)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -278,8 +282,9 @@ func (c *NoteController) DeleteNoteHandler(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func NewNoteController(usecase NoteUsecase) *NoteController {
+func NewNoteController(usecase NoteUsecase, validator *validator.Validate) *NoteController {
 	return &NoteController{
-		usecase: usecase,
+		usecase:   usecase,
+		validator: validator,
 	}
 }

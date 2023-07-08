@@ -24,8 +24,8 @@ func NewSignUpResponse(id uuid.UUID, username string, email string) SignUpRespon
 
 type SignUpRequest struct {
 	Username string `json:"username" validate:"required,alphanum,min=3,max=20"`
-	Email    string `json:"email" validate:"required,email,min=5,max=254"`
-	Password string `json:"password" validate:"required,min=6,max=30"`
+	Email    string `json:"email" validate:"required,emailRFC,min=5,max=254"`
+	Password string `json:"password" validate:"required,security"`
 }
 
 func (sur SignUpRequest) ToDomain(validate *validator.Validate) (usecase.UserInput, error) {
@@ -48,7 +48,6 @@ type SignInRequest struct {
 }
 
 func (sir SignInRequest) ToDomain(validate *validator.Validate) (usecase.AuthInput, error) {
-
 	if err := validate.Struct(sir); err != nil {
 		logrus.Error(err)
 		return usecase.AuthInput{}, err.(validator.ValidationErrors)
