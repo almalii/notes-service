@@ -5,15 +5,10 @@ db:
   password:
   dbname: "bookmarks"
   sslmode: "disable"
-  driver: "postgres"
-
-goose:
-    dir: "../internal/db/migrations/"
-    driver: "postgres"
-    dbstring: "postgresql://localhost:5432/bookmarks?sslmode=disable"
+  driver: "pgx"
 
 server:
-  port: "8086"
+    port: "8086"
 
 salt: "b8a8be5c69248224cmv" # в переменную окружения
 

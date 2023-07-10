@@ -16,6 +16,7 @@ func NewConnectionDB(ctx context.Context, c *config.DbConfig) (*pgx.Conn, error)
 		logrus.Fatalf("failed to connect the database: %v", err)
 		return nil, err
 	}
+
 	if err != nil {
 		logrus.Fatalf("failed to connect to the database: %v", err)
 		return nil, err

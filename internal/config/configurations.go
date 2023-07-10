@@ -12,6 +12,7 @@ type DbConfig struct {
 	Password string
 	DBName   string
 	SSLMode  string
+	Driver   string
 }
 
 func NewDbConfig() *DbConfig {
@@ -22,20 +23,7 @@ func NewDbConfig() *DbConfig {
 		Password: viper.GetString("db.password"),
 		DBName:   viper.GetString("db.dbname"),
 		SSLMode:  viper.GetString("db.sslmode"),
-	}
-}
-
-type MigrationsConfig struct {
-	Driver        string
-	ConnString    string
-	MigrationsDir string
-}
-
-func NewMigrationsConfig() *MigrationsConfig {
-	return &MigrationsConfig{
-		Driver:        viper.GetString("goose.driver"),
-		ConnString:    viper.GetString("goose.dbstring"),
-		MigrationsDir: viper.GetString("goose.dir"),
+		Driver:   viper.GetString("db.driver"),
 	}
 }
 
@@ -50,10 +38,10 @@ func ServerPort() string {
 
 func SessionKey() string {
 	session := viper.GetString("session")
-	//if session == "" {
-	//	logrus.Error("session key is empty")
-	//	return ""
-	//}
+	if session == "" {
+		logrus.Error("session key is empty")
+		return ""
+	}
 	return session
 }
 

@@ -9,6 +9,7 @@ import (
 	authStorage "notes-rew/internal/auth/storage"
 	authUsecase "notes-rew/internal/auth/usecase"
 	"notes-rew/internal/config"
+	"notes-rew/internal/db/migrations"
 	"notes-rew/internal/db/postgres"
 	"notes-rew/internal/hash"
 	notesController "notes-rew/internal/note/controller/handler"
@@ -39,10 +40,20 @@ func NewApp() *App {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.Timeout(30 * time.Second))
 
-	connectDB, err := postgres.NewConnectionDB(context.Background(), config.NewDbConfig())
+	logrus.SetFormatter(&logrus.JSONFormatter{})
+
+	if err := config.InitConfig(); err != nil {
+		logrus.Fatalf("Failed to load config: %+v", err)
+	}
+
+	dbConfigurations := config.NewDbConfig()
+	connectDB, err := postgres.NewConnectionDB(context.Background(), dbConfigurations)
 	if err != nil {
-		logrus.Errorf("Failed to connect to DB: %+v", err)
-		os.Exit(1)
+		logrus.Fatalf("Failed to connect to DB: %+v", err)
+	}
+
+	if err = migrations.UpMigrations(dbConfigurations); err != nil {
+		logrus.Errorf("Failed to migrate: %+v", err)
 	}
 
 	validation := validator.New()
@@ -78,9 +89,6 @@ func (a *App) Start(port string) error {
 		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
-	if port == "" {
-		logrus.Fatal("port is empty")
-	}
 
 	go func() {
 		if err := httpServer.ListenAndServe(); err != nil {
@@ -89,7 +97,6 @@ func (a *App) Start(port string) error {
 	}()
 
 	logrus.Println("server started on port " + port)
-	logrus.SetFormatter(&logrus.JSONFormatter{})
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, os.Interrupt)
