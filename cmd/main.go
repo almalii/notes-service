@@ -8,7 +8,9 @@ import (
 
 func main() {
 
-	if err := app.NewApp().Start(config.ServerPort()); err != nil {
+	cfg := config.InitConfig()
+
+	if err := app.NewApp().Start(cfg.HTTPServer.Port); err != nil {
 		logrus.Fatal(err)
 	}
 

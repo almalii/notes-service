@@ -1,0 +1,13 @@
+data_base:
+  host: "localhost"
+  port: "5432"
+  username:
+  password:
+  dbname: "bookmarks"
+  sslmode: "disable"
+  driver: "pgx"
+
+migrations_dir: "../internal/db/migrations/"
+
+http_server:
+    port: "8086"

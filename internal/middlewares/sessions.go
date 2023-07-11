@@ -11,7 +11,8 @@ import (
 )
 
 func SessionMiddleware(next http.Handler) http.Handler {
-	sessionStore := sessions.NewCookieStore([]byte(config.SessionKey()))
+	cfg := config.InitConfig()
+	sessionStore := sessions.NewCookieStore([]byte(cfg.Session))
 	sessionStore.Options.HttpOnly = true
 	sessionStore.Options.SameSite = http.SameSiteStrictMode
 	gob.Register(uuid.UUID{})

@@ -8,8 +8,8 @@ import (
 	"notes-rew/internal/config"
 )
 
-func NewConnectionDB(ctx context.Context, c *config.DbConfig) (*pgx.Conn, error) {
-	connStr := fmt.Sprintf("host=%s port=%s dbname=%s sslmode=%s", c.Host, c.Port, c.DBName, c.SSLMode)
+func NewConnectionDB(ctx context.Context, c *config.Config) (*pgx.Conn, error) {
+	connStr := fmt.Sprintf("host=%s port=%s dbname=%s sslmode=%s", c.DB.Host, c.DB.Port, c.DB.DBName, c.DB.SSLMode)
 	conn, err := pgx.Connect(ctx, connStr)
 
 	if c == nil {

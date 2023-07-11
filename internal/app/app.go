@@ -41,24 +41,20 @@ func NewApp() *App {
 	router.Use(middleware.Timeout(30 * time.Second))
 
 	logrus.SetFormatter(&logrus.JSONFormatter{})
+	cfg := config.InitConfig()
 
-	if err := config.InitConfig(); err != nil {
-		logrus.Fatalf("Failed to load config: %+v", err)
-	}
-
-	dbConfigurations := config.NewDbConfig()
-	connectDB, err := postgres.NewConnectionDB(context.Background(), dbConfigurations)
+	connectDB, err := postgres.NewConnectionDB(context.Background(), cfg)
 	if err != nil {
 		logrus.Fatalf("Failed to connect to DB: %+v", err)
 	}
 
-	if err = migrations.UpMigrations(dbConfigurations); err != nil {
+	if err = migrations.UpMigrations(cfg); err != nil {
 		logrus.Errorf("Failed to migrate: %+v", err)
 	}
 
 	validation := validator.New()
 	validators.RegisterCustomValidation(validation)
-	hasher := hash.NewPasswordHasher(config.SaltKey())
+	hasher := hash.NewPasswordHasher(cfg.Salt)
 
 	noteStorage := notesStorage.NewNoteStorage(connectDB)
 	noteService := notesService.NewNoteService(noteStorage)
