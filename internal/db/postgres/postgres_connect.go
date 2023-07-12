@@ -8,7 +8,7 @@ import (
 	"notes-rew/internal/config"
 )
 
-func NewConnectionDB(ctx context.Context, c *config.Config) (*pgx.Conn, error) {
+func ConnectionPostgresDB(ctx context.Context, c *config.Config) (*pgx.Conn, error) {
 	connStr := fmt.Sprintf("host=%s port=%s dbname=%s sslmode=%s", c.DB.Host, c.DB.Port, c.DB.DBName, c.DB.SSLMode)
 	conn, err := pgx.Connect(ctx, connStr)
 

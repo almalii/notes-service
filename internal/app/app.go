@@ -43,7 +43,7 @@ func NewApp() *App {
 	logrus.SetFormatter(&logrus.JSONFormatter{})
 	cfg := config.InitConfig()
 
-	connectDB, err := postgres.NewConnectionDB(context.Background(), cfg)
+	connectDB, err := postgres.ConnectionPostgresDB(context.Background(), cfg)
 	if err != nil {
 		logrus.Fatalf("Failed to connect to DB: %+v", err)
 	}
