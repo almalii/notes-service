@@ -10,14 +10,9 @@ import (
 	"notes-rew/internal/config"
 )
 
-func ConnectionMongoDB(ctx context.Context, c *config.Config) (*mongo.Client, error) {
+func ConnectionMongoDB(ctx context.Context, c config.Config) (*mongo.Client, error) {
 	connStr := fmt.Sprintf("mongodb://%s:%s", c.DB.Host, c.DB.Port)
 	conn, err := mongo.Connect(ctx, options.Client().ApplyURI(connStr))
-
-	if c == nil {
-		logrus.Fatalf("failed to connect the mongo database: %v", err)
-		return nil, err
-	}
 
 	if err != nil {
 		logrus.Fatalf("failed to connect to the mongo database: %v", err)
@@ -25,7 +20,11 @@ func ConnectionMongoDB(ctx context.Context, c *config.Config) (*mongo.Client, er
 	}
 
 	if err = conn.Ping(ctx, readpref.Primary()); err != nil {
-		conn.Disconnect(ctx)
+		if err = conn.Disconnect(ctx); err != nil {
+			logrus.Fatalf("failed to disconnect from the mongo database: %v", err)
+			return nil, err
+		}
+
 		logrus.Fatalf("failed to ping the mongo database: %v", err)
 		return nil, err
 	}

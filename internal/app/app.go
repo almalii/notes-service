@@ -4,22 +4,22 @@ import (
 	"context"
 	"github.com/go-playground/validator/v10"
 	"net/http"
-	authController "notes-rew/internal/auth/controller/rest/handler"
-	authService "notes-rew/internal/auth/service"
-	authStorage "notes-rew/internal/auth/storage"
-	authUsecase "notes-rew/internal/auth/usecase"
+	authController "notes-rew/internal/auth_service/controller/rest/handler"
+	authService "notes-rew/internal/auth_service/service"
+	authStorage "notes-rew/internal/auth_service/storage"
+	authUsecase "notes-rew/internal/auth_service/usecase"
 	"notes-rew/internal/config"
 	"notes-rew/internal/db/migrations"
 	"notes-rew/internal/db/postgres"
 	"notes-rew/internal/hash"
-	notesController "notes-rew/internal/note/controller/handler"
-	notesService "notes-rew/internal/note/service"
-	notesStorage "notes-rew/internal/note/storage"
-	notesUsecase "notes-rew/internal/note/usecase"
-	usersController "notes-rew/internal/user/controller/handler"
-	usersService "notes-rew/internal/user/service"
-	usersStorage "notes-rew/internal/user/storage"
-	usersUsecase "notes-rew/internal/user/usecase"
+	notesController "notes-rew/internal/notes_service/controller/handler"
+	notesService "notes-rew/internal/notes_service/service"
+	notesStorage "notes-rew/internal/notes_service/storage"
+	notesUsecase "notes-rew/internal/notes_service/usecase"
+	usersController "notes-rew/internal/users_service/controller/handler"
+	usersService "notes-rew/internal/users_service/service"
+	usersStorage "notes-rew/internal/users_service/storage"
+	usersUsecase "notes-rew/internal/users_service/usecase"
 	"notes-rew/internal/validators"
 	"os"
 	"os/signal"
@@ -32,18 +32,17 @@ import (
 
 type App struct {
 	router chi.Router
+	ctx    context.Context
+	cfg    config.Config
 }
 
-func NewApp() *App {
+func NewApp(ctx context.Context, cfg config.Config) *App {
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.Timeout(30 * time.Second))
 
-	logrus.SetFormatter(&logrus.JSONFormatter{})
-	cfg := config.InitConfig()
-
-	connectDB, err := postgres.ConnectionPostgresDB(context.Background(), cfg)
+	connectDB, err := postgres.ConnectionPostgresDB(ctx, cfg)
 	if err != nil {
 		logrus.Fatalf("Failed to connect to DB: %+v", err)
 	}
@@ -74,12 +73,16 @@ func NewApp() *App {
 	authsController := authController.NewAuthController(authsUsecase, validation)
 	authsController.Register(router)
 
-	return &App{router: router}
+	return &App{
+		router: router,
+		ctx:    ctx,
+		cfg:    cfg,
+	}
 }
 
-func (a *App) Start(port string) error {
+func (a *App) Start() error {
 	httpServer := &http.Server{
-		Addr:           ":" + port,
+		Addr:           a.cfg.HTTPServer.Address,
 		Handler:        a.router,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
@@ -92,15 +95,13 @@ func (a *App) Start(port string) error {
 		}
 	}()
 
-	logrus.Println("server started on port " + port)
-
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, os.Interrupt)
 
 	<-quit
 
-	ctx, shutdown := context.WithTimeout(context.Background(), 5*time.Second)
+	shutdownCtx, shutdown := context.WithTimeout(a.ctx, 5*time.Second)
 	defer shutdown()
 
-	return httpServer.Shutdown(ctx)
+	return httpServer.Shutdown(shutdownCtx)
 }

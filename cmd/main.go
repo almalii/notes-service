@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"github.com/sirupsen/logrus"
 	"notes-rew/internal/app"
 	"notes-rew/internal/config"
@@ -8,10 +9,15 @@ import (
 
 func main() {
 
-	cfg := config.InitConfig()
+	logrus.SetFormatter(&logrus.JSONFormatter{})
+	logrus.SetLevel(logrus.DebugLevel)
 
-	if err := app.NewApp().Start(cfg.HTTPServer.Port); err != nil {
-		logrus.Fatal(err)
+	cfg := config.InitConfig()
+	ctx := context.Background()
+
+	newApp := app.NewApp(ctx, cfg)
+	if err := newApp.Start(); err != nil {
+		logrus.Fatalf("Failed to run app: %+v", err)
 	}
 
 }

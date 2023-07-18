@@ -4,7 +4,6 @@ import (
 	"github.com/go-playground/validator/v10"
 	"net/mail"
 	"regexp"
-	"unsafe"
 )
 
 var (
@@ -69,9 +68,9 @@ func validatePasswordSecurity(fl validator.FieldLevel) bool {
 }
 
 func validateBytesize(fl validator.FieldLevel) bool {
-	fieldValue := fl.Field()
+	fieldValue := fl.Field().String()
 
-	size := int64(unsafe.Sizeof(fieldValue.String()))
+	size := int64(len(fieldValue))
 	maxSize := int64(30000000) // 30 mb
 
 	return size <= maxSize

@@ -1,17 +1,20 @@
 package config
 
 import (
+	"flag"
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/sirupsen/logrus"
-	"github.com/subosito/gotenv"
+	"log"
+	"os"
+	"sync"
 )
 
 type Config struct {
-	DB            `yaml:"data_base"`
-	HTTPServer    `yaml:"http_server"`
-	MigrationsDir string `yaml:"migrations_dir" env:"MIGRATIONS_DIR"`
-	Session       string `yaml:"session" env:"SESSION"`
-	Salt          string `yaml:"salt" env:"SALT"`
+	DB            DB         `yaml:"data_base"`
+	HTTPServer    HTTPServer `yaml:"http_server"`
+	MigrationsDir string     `yaml:"migrations_dir" env:"MIGRATIONS_DIR"`
+	Session       string     `yaml:"session" env:"SESSION"`
+	Salt          string     `yaml:"salt" env:"SALT"`
 }
 
 type DB struct {
@@ -25,24 +28,72 @@ type DB struct {
 }
 
 type HTTPServer struct {
-	Host string `yaml:"host" env:"HTTP_HOST"`
-	Port string `yaml:"port" env:"HTTP_PORT"`
+	Address string `yaml:"address" env:"HTTP_SERVER_ADDRESS"`
 }
 
-func InitConfig() *Config {
-	var cfg Config
+const (
+	FlagConfigPathName = "config"
+	EnvConfigPathName  = "CONFIG_PATH"
+	FlagEnvPathName    = "env"
+	EnvEnvPathName     = "ENV_PATH"
+)
 
-	if err := gotenv.Load("../config/.env"); err != nil {
-		logrus.Fatalf("failed to load env: %v", err)
-	}
+var (
+	configPath string
+	envPath    string
+	instance   Config
+	once       sync.Once
+	onceFlag   sync.Once
+)
 
-	if err := cleanenv.ReadConfig("../config/config.yml", &cfg); err != nil {
-		logrus.Fatalf("failed to read config file: %v", err)
-	}
+func InitConfig() Config {
+	once.Do(func() {
+		// этот кодв выполнится только 1 раз при первом вызове этого метода
 
-	if err := cleanenv.ReadEnv(&cfg); err != nil {
-		logrus.Fatalf("failed to read env: %v", err)
-	}
+		// 1. parse flag
+		onceFlag.Do(func() {
+			flag.StringVar(
+				&configPath,
+				FlagConfigPathName,
+				"config/config.yml",
+				"path to config file",
+			)
+			flag.StringVar(
+				&envPath,
+				FlagEnvPathName,
+				"config/.env",
+				"path to .env file",
+			)
 
-	return &cfg
+			flag.Parse()
+		})
+
+		// 2. read env
+		if p, ok := os.LookupEnv(EnvConfigPathName); ok {
+			configPath = p
+		}
+
+		if p, ok := os.LookupEnv(EnvEnvPathName); ok {
+			envPath = p
+		}
+
+		if err := cleanenv.ReadConfig(configPath, &instance); err != nil {
+			help, helpErr := cleanenv.GetDescription(&instance, nil)
+			if helpErr != nil {
+				logrus.Printf("error get config description due error: %v\n", helpErr)
+			} else {
+				logrus.Println(help)
+			}
+
+			logrus.Fatal(helpErr)
+		}
+
+		log.Println("configuration loaded")
+	})
+
+	return instance
+}
+
+func ResetOnce() {
+	once = sync.Once{}
 }

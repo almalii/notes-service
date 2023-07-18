@@ -7,7 +7,11 @@ data_base:
   sslmode: "disable"
   driver: "pgx"
 
-migrations_dir: "../internal/db/migrations/"
-
 http_server:
-    port: "8086"
+    address: "localhost:8086"
+    read_timeout: "10"
+    write_timeout: "10"
+    max_header_bytes: "1"
+
+
+migrations_dir: "../internal/db/migrations/"
