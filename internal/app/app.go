@@ -16,6 +16,7 @@ import (
 	notesService "notes-rew/internal/notes_service/service"
 	notesStorage "notes-rew/internal/notes_service/storage"
 	notesUsecase "notes-rew/internal/notes_service/usecase"
+	"notes-rew/internal/sessions"
 	usersController "notes-rew/internal/users_service/controller/handler"
 	usersService "notes-rew/internal/users_service/service"
 	usersStorage "notes-rew/internal/users_service/storage"
@@ -53,24 +54,27 @@ func NewApp(ctx context.Context, cfg config.Config) *App {
 
 	validation := validator.New()
 	validators.RegisterCustomValidation(validation)
+
+	sessionStore := sessions.NewRedisSessionStore("localhost:32768", "", 0)
+
 	hasher := hash.NewPasswordHasher(cfg.Salt)
 
 	noteStorage := notesStorage.NewNoteStorage(connectDB)
 	noteService := notesService.NewNoteService(noteStorage)
 	noteUsecase := notesUsecase.NewNoteUsecase(noteService)
-	noteController := notesController.NewNoteController(noteUsecase, validation)
+	noteController := notesController.NewNoteController(noteUsecase, validation, sessionStore)
 	noteController.Register(router)
 
 	userStorage := usersStorage.NewPSQLUserStorage(connectDB)
 	userService := usersService.NewUserService(userStorage)
 	userUsecase := usersUsecase.NewUserUsecase(userService, hasher)
-	userController := usersController.NewUserController(userUsecase, validation)
+	userController := usersController.NewUserController(userUsecase, validation, sessionStore)
 	userController.Register(router)
 
 	authsStorage := authStorage.NewUserStorage(connectDB)
 	authsService := authService.NewAuthService(authsStorage)
 	authsUsecase := authUsecase.NewAuthUsecase(authsService, hasher)
-	authsController := authController.NewAuthController(authsUsecase, validation)
+	authsController := authController.NewAuthController(authsUsecase, validation, sessionStore)
 	authsController.Register(router)
 
 	return &App{

@@ -7,16 +7,12 @@ import (
 )
 
 type SignUpResponse struct {
-	ID       uuid.UUID `json:"id"`
-	Username string    `json:"username"`
-	Email    string    `json:"email"`
+	ID uuid.UUID `json:"id"`
 }
 
-func NewSignUpResponse(id uuid.UUID, username string, email string) SignUpResponse {
+func NewSignUpResponse(id uuid.UUID) SignUpResponse {
 	return SignUpResponse{
-		ID:       id,
-		Username: username,
-		Email:    email,
+		ID: id,
 	}
 }
 

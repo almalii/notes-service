@@ -13,7 +13,7 @@ type Config struct {
 	DB            DB         `yaml:"data_base"`
 	HTTPServer    HTTPServer `yaml:"http_server"`
 	MigrationsDir string     `yaml:"migrations_dir" env:"MIGRATIONS_DIR"`
-	Session       string     `yaml:"session" env:"SESSION"`
+	Session       string     `yaml:"sessions" env:"SESSION"`
 	Salt          string     `yaml:"salt" env:"SALT"`
 }
 

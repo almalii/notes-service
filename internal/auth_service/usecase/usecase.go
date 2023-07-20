@@ -49,7 +49,7 @@ func (u *AuthUsecase) AuthenticateUser(ctx context.Context, req AuthInput) (mode
 		return models.AuthResponse{}, err
 	}
 
-	resp := models.NewAuthResponse(user.ID, user.Username, user.Email)
+	resp := models.NewAuthResponse(user.UserID, user.Username, user.Email)
 
 	return resp, nil
 }

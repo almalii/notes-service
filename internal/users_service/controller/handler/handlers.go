@@ -6,10 +6,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
-	"github.com/gorilla/sessions"
 	"github.com/sirupsen/logrus"
 	"net/http"
-	"notes-rew/internal/middlewares"
+	"notes-rew/internal/sessions"
 	"notes-rew/internal/users_service/controller"
 	"notes-rew/internal/users_service/models"
 	"notes-rew/internal/users_service/usecase"
@@ -24,13 +23,14 @@ type UserUsecase interface {
 }
 
 type UserController struct {
-	usecase   UserUsecase
-	validator *validator.Validate
+	usecase      UserUsecase
+	validator    *validator.Validate
+	sessionStore *sessions.SessionStore
 }
 
 func (c *UserController) Register(r chi.Router) {
 	r.Route("/users", func(r chi.Router) {
-		r.Use(middlewares.SessionMiddleware)
+		//r.Use(middlewares.SessionMiddleware)
 		r.Get("/", c.GetUserHandler)
 		r.Put("/", c.UpdateUserHandler)
 		r.Delete("/", c.DeleteUserHandler)
@@ -46,13 +46,27 @@ func (c *UserController) GetUserHandler(w http.ResponseWriter, r *http.Request) 
 
 	ctx := r.Context()
 
-	session, ok := ctx.Value("session").(*sessions.Session)
-	if !ok {
-		http.Error(w, "no session", http.StatusInternalServerError)
+	currentSessionID, err := sessions.GetSessionByCookie(r, "session-id")
+	if err != nil {
+		logrus.Error("error getting session id from cookie: ", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	currentUserID := session.Values["userID"].(uuid.UUID)
+	getSession, err := c.sessionStore.Get(ctx, currentSessionID)
+	if err != nil {
+		logrus.Error("error getting session store: ", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	valueUserID := getSession.Values["userID"]
+	currentUserID, err := uuid.Parse(valueUserID.(string))
+	if err != nil {
+		logrus.Error("error parsing userID: ", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	user, err := c.usecase.ReadUser(ctx, currentUserID)
 	if err != nil {
@@ -77,19 +91,29 @@ func (c *UserController) UpdateUserHandler(w http.ResponseWriter, r *http.Reques
 
 	ctx := r.Context()
 
-	session, ok := ctx.Value("session").(*sessions.Session)
-	if !ok {
-		http.Error(w, "no session", http.StatusInternalServerError)
+	currentSessionID, err := sessions.GetSessionByCookie(r, "session-id")
+	if err != nil {
+		logrus.Error("error getting session id from cookie: ", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	currentUserID, ok := session.Values["userID"].(uuid.UUID)
-	if !ok {
-		http.Error(w, "no userID", http.StatusInternalServerError)
+	getSession, err := c.sessionStore.Get(ctx, currentSessionID)
+	if err != nil {
+		logrus.Error("error getting session store: ", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	_, err := c.usecase.ReadUser(ctx, currentUserID)
+	valueUserID := getSession.Values["userID"]
+	currentUserID, err := uuid.Parse(valueUserID.(string))
+	if err != nil {
+		logrus.Error("error parsing user id: ", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	_, err = c.usecase.ReadUser(ctx, currentUserID)
 	if err != nil {
 		http.Error(w, "id is not found", http.StatusNotFound)
 		return
@@ -146,19 +170,24 @@ func (c *UserController) DeleteUserHandler(w http.ResponseWriter, r *http.Reques
 
 	ctx := r.Context()
 
-	session, ok := ctx.Value("session").(*sessions.Session)
-	if !ok {
-		http.Error(w, "no session", http.StatusInternalServerError)
+	currentSessionID, err := sessions.GetSessionByCookie(r, "session-id")
+	if err != nil {
+		logrus.Error("error getting session id from cookie: ", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	currentUserID, ok := session.Values["userID"].(uuid.UUID)
-	if !ok {
-		http.Error(w, "no userID", http.StatusInternalServerError)
+	getSession, err := c.sessionStore.Get(ctx, currentSessionID)
+	if err != nil {
+		logrus.Error("error getting session store: ", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	_, err := c.usecase.ReadUser(ctx, currentUserID)
+	valueUserID := getSession.Values["userID"]
+	currentUserID, err := uuid.Parse(valueUserID.(string))
+
+	_, err = c.usecase.ReadUser(ctx, currentUserID)
 	if err != nil {
 		http.Error(w, "id is not found", http.StatusNotFound)
 		return
@@ -170,10 +199,10 @@ func (c *UserController) DeleteUserHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	session.Values["userID"] = nil
-	session.Options.MaxAge = -1
-	err = session.Save(r, w)
+	sessions.ClearCookie(w, "session-id")
+	err = c.sessionStore.Delete(ctx, currentSessionID)
 	if err != nil {
+		logrus.Error("error deleting session store: ", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -181,9 +210,10 @@ func (c *UserController) DeleteUserHandler(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func NewUserController(usecase UserUsecase, validate *validator.Validate) *UserController {
+func NewUserController(usecase UserUsecase, validate *validator.Validate, sessionStore *sessions.SessionStore) *UserController {
 	return &UserController{
-		usecase:   usecase,
-		validator: validate,
+		usecase:      usecase,
+		validator:    validate,
+		sessionStore: sessionStore,
 	}
 }

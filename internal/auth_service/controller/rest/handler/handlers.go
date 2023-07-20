@@ -6,15 +6,13 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
-	"github.com/gorilla/sessions"
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"notes-rew/internal/auth_service/controller"
 	"notes-rew/internal/auth_service/models"
 	"notes-rew/internal/auth_service/usecase"
-	"notes-rew/internal/session"
+	"notes-rew/internal/sessions"
 	"strings"
-	"time"
 )
 
 type AuthUsecase interface {
@@ -26,12 +24,12 @@ type AuthUsecase interface {
 type AuthController struct {
 	usecase      AuthUsecase
 	validator    *validator.Validate
-	sessionStore *session.RedisSessionStore
+	sessionStore *sessions.SessionStore
 }
 
 func (c *AuthController) Register(r chi.Router) {
 	r.Route("/auth", func(r chi.Router) {
-		//r.Use(middlewares.SessMiddleware)
+		//r.Use(middlewares.SessionMiddleware)
 		r.Post("/register", c.SignUpHandler)
 		r.Post("/login", c.SignInHandler)
 		r.Post("/logout", c.SignOutHandler)
@@ -45,10 +43,8 @@ func (c *AuthController) SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx := r.Context()
 
-	sessionStore := session.NewRedisSessionStore("0.0.0.0:32768", "", 1)
-	c.sessionStore = sessionStore
-
 	var req controller.SignUpRequest
+
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -82,16 +78,16 @@ func (c *AuthController) SignUpHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sess, err := session.CreateSession(12 * time.Hour)
-	sess.Values["id"] = userID
-	err = sessionStore.Set(ctx, sess)
-	if err != nil {
-		logrus.Errorf("Failed to save session in Redis: %v", err)
-		w.WriteHeader(http.StatusInternalServerError)
+	session := sessions.NewSession()
+	session.Values["userID"] = userID
+	if err = c.sessionStore.Save(ctx, session); err != nil {
+		logrus.Errorf("error save session in redis: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	sessions.SetCookie(w, session.ID, "session-id")
 
-	resp := controller.NewSignUpResponse(userID, domain.Username, domain.Email)
+	resp := controller.NewSignUpResponse(userID)
 
 	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
@@ -111,17 +107,14 @@ func (c *AuthController) SignInHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
-	sessionStore := session.NewRedisSessionStore("0.0.0.0:32768", "", 1)
-	sessionID := r.Header.Get("X-Session-ID")
-	sessions, err := sessionStore.Get(ctx, sessionID)
-	if err != nil {
-		logrus.Errorf("Failed to get session from Redis: %v", err)
-		w.WriteHeader(http.StatusInternalServerError)
+	if sessions.CheckCookieValue(w, r, "session-id") {
+		http.Error(w, "user already logged in", http.StatusBadRequest)
 		return
 	}
 
 	var req controller.SignInRequest
-	err = json.NewDecoder(r.Body).Decode(&req)
+
+	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		logrus.Errorf("error decoding request: %v", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -143,24 +136,14 @@ func (c *AuthController) SignInHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	existingSession, err := sessionStore.Get(ctx, resp.ID.String())
-	if err != nil {
-		logrus.Errorf("error getting session: %v", err)
+	session := sessions.NewSession()
+	session.Values["userID"] = resp.UserID
+	if err = c.sessionStore.Save(ctx, session); err != nil {
+		logrus.Errorf("error save session in redis: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if existingSession != nil {
-		http.Error(w, "user is already signed in", http.StatusBadRequest)
-		return
-	}
-
-	session, err := session.CreateSession(1 * time.Minute)
-	session.Values["id"] = resp.ID
-	err = sessionStore.Set(ctx, sessions)
-	if err != nil {
-		logrus.Errorf("error creating session: %v", err)
-		return
-	}
+	sessions.SetCookie(w, session.ID, "session-id")
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
@@ -178,18 +161,19 @@ func (c *AuthController) SignOutHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	session, ok := r.Context().Value("session").(*sessions.Session)
-	if !ok {
-		http.Error(w, "no session", http.StatusInternalServerError)
+	ctx := r.Context()
+
+	currentSessionID, err := sessions.GetSessionByCookie(r, "session-id")
+	if err != nil {
+		logrus.Error("error getting session id from cookie: ", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	session.Values["userID"] = nil
-	session.Options.MaxAge = -1
-
-	err := session.Save(r, w)
+	sessions.ClearCookie(w, "session-id")
+	err = c.sessionStore.Delete(ctx, currentSessionID)
 	if err != nil {
-		logrus.Errorf("error saving session: %v", err)
+		logrus.Error("error deleting session store: ", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -197,9 +181,10 @@ func (c *AuthController) SignOutHandler(w http.ResponseWriter, r *http.Request) 
 	w.WriteHeader(http.StatusOK)
 }
 
-func NewAuthController(usecase AuthUsecase, validator *validator.Validate) *AuthController {
+func NewAuthController(usecase AuthUsecase, validator *validator.Validate, sessionStore *sessions.SessionStore) *AuthController {
 	return &AuthController{
-		usecase:   usecase,
-		validator: validator,
+		usecase:      usecase,
+		validator:    validator,
+		sessionStore: sessionStore,
 	}
 }

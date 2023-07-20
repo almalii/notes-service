@@ -24,7 +24,7 @@ type AuthResponse struct {
 
 func NewAuthResponse(id uuid.UUID, username string, email string, passwordHash string) models.AuthOutput {
 	return models.AuthOutput{
-		ID:           id,
+		UserID:       id,
 		Username:     username,
 		Email:        email,
 		PasswordHash: passwordHash,
