@@ -1,20 +1,10 @@
-package app
+package rest_app
 
 import (
 	"context"
-	pb_auth_service "github.com/almalii/grpc-contracts/gen/go/auth_service/service/v1"
-	pb_notes_service "github.com/almalii/grpc-contracts/gen/go/notes_service/service/v1"
-	pb_users_service "github.com/almalii/grpc-contracts/gen/go/users_service/service/v1"
 	"github.com/go-playground/validator/v10"
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"golang.org/x/sync/errgroup"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/reflection"
 	"log"
-	"net"
 	"net/http"
-	authControllerGRPC "notes-rew/internal/auth_service/controller/grpc/v1"
 	authController "notes-rew/internal/auth_service/controller/rest/handler"
 	authService "notes-rew/internal/auth_service/service"
 	authStorage "notes-rew/internal/auth_service/storage"
@@ -23,13 +13,11 @@ import (
 	"notes-rew/internal/db/migrations"
 	"notes-rew/internal/db/postgres"
 	"notes-rew/internal/hash"
-	notesControllerGRPC "notes-rew/internal/notes_service/controller/grpc/v1"
 	notesController "notes-rew/internal/notes_service/controller/rest/handler"
 	notesService "notes-rew/internal/notes_service/service"
 	notesStorage "notes-rew/internal/notes_service/storage"
 	notesUsecase "notes-rew/internal/notes_service/usecase"
 	"notes-rew/internal/sessions"
-	usersControllerGRPC "notes-rew/internal/users_service/controller/grpc/v1"
 	usersController "notes-rew/internal/users_service/controller/rest/handler"
 	usersService "notes-rew/internal/users_service/service"
 	usersStorage "notes-rew/internal/users_service/storage"
@@ -43,12 +31,6 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/sirupsen/logrus"
 )
-
-type AppGRPC struct {
-	srv *grpc.Server
-	ctx context.Context
-	cfg config.Config
-}
 
 type App struct {
 	router chi.Router
@@ -103,81 +85,7 @@ func NewApp(ctx context.Context, cfg config.Config) *App {
 	}
 }
 
-func NewAppGRPC(ctx context.Context, cfg config.Config) *AppGRPC {
-	return &AppGRPC{
-		srv: grpc.NewServer(),
-		ctx: ctx,
-		cfg: cfg,
-	}
-}
-
-func (ap *AppGRPC) StartGRPC() error {
-	listener, err := net.Listen("tcp", ap.cfg.GRPCServer.Address)
-	if err != nil {
-		logrus.Fatalf("Failed to listen: %+v", err)
-	}
-
-	pb_auth_service.RegisterAuthServiceServer(
-		ap.srv,
-		authControllerGRPC.NewAuthServer(pb_auth_service.UnimplementedAuthServiceServer{}),
-	)
-	pb_users_service.RegisterUsersServiceServer(
-		ap.srv,
-		usersControllerGRPC.NewUsersServer(pb_users_service.UnimplementedUsersServiceServer{}),
-	)
-	pb_notes_service.RegisterNotesServiceServer(
-		ap.srv,
-		notesControllerGRPC.NewNotesServer(pb_notes_service.UnimplementedNotesServiceServer{}),
-	)
-
-	reflection.Register(ap.srv)
-
-	mux := runtime.NewServeMux()
-	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
-
-	if err = pb_auth_service.RegisterAuthServiceHandlerFromEndpoint(
-		ap.ctx,
-		mux,
-		ap.cfg.GRPCServer.Address,
-		opts,
-	); err != nil {
-		logrus.Fatalf("Failed to register auth service v1: %+v", err)
-	}
-
-	if err = pb_users_service.RegisterUsersServiceHandlerFromEndpoint(
-		ap.ctx,
-		mux,
-		ap.cfg.GRPCServer.Address,
-		opts,
-	); err != nil {
-		logrus.Fatalf("Failed to register users service v1: %+v", err)
-	}
-
-	if err = pb_notes_service.RegisterNotesServiceHandlerFromEndpoint(
-		ap.ctx,
-		mux,
-		ap.cfg.GRPCServer.Address,
-		opts,
-	); err != nil {
-		logrus.Fatalf("Failed to register notes service v1: %+v", err)
-	}
-
-	g, _ := errgroup.WithContext(ap.ctx)
-
-	g.Go(func() error {
-		log.Println("grpc server started on address:", ap.cfg.GRPCServer.Address)
-		return ap.srv.Serve(listener)
-	})
-
-	g.Go(func() error {
-		log.Println("grpc-gateway server started on address:", ap.cfg.GRPCServer.GateWayAddress)
-		return http.ListenAndServe(ap.cfg.GRPCServer.GateWayAddress, mux)
-	})
-
-	return g.Wait()
-}
-
-func (a *App) StartHTTP() error {
+func (a *App) Start() error {
 	httpServer := &http.Server{
 		Addr:           a.cfg.HTTPServer.Address,
 		Handler:        a.router,

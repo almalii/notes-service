@@ -7,25 +7,16 @@ import (
 )
 
 type CreateNoteInput struct {
-	Title  string
-	Body   string
-	Tags   []string
+	Title  string   `json:"title" validate:"required,alphanum,min=1,max=50"`
+	Body   string   `json:"body" validate:"required,bytesize"`
+	Tags   []string `json:"tags" validate:"omitempty"`
 	Author uuid.UUID
 }
 
-func NewCreateNoteInput(title string, body string, tags []string, currentUserID uuid.UUID) (CreateNoteInput, error) {
-	return CreateNoteInput{
-		Title:  title,
-		Body:   body,
-		Tags:   tags,
-		Author: currentUserID,
-	}, nil
-}
-
 type UpdateNoteInput struct {
-	Title     *string
-	Body      *string
-	Tags      *[]string
+	Title     *string   `json:"title" validate:"required,alphanum,min=1,max=50"`
+	Body      *string   `json:"body" validate:"required,bytesize"`
+	Tags      *[]string `json:"tags" validate:"omitempty"`
 	UpdatedAt time.Time
 }
 

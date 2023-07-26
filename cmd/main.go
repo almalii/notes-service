@@ -3,7 +3,8 @@ package main
 import (
 	"context"
 	"github.com/sirupsen/logrus"
-	"notes-rew/internal/app"
+	"notes-rew/internal/app/grpc_app"
+	"notes-rew/internal/app/rest_app"
 	"notes-rew/internal/config"
 	"sync"
 )
@@ -16,8 +17,8 @@ func main() {
 	cfg := config.InitConfig()
 	ctx := context.Background()
 
-	newApp := app.NewApp(ctx, cfg)
-	newAppGRPC := app.NewAppGRPC(ctx, cfg)
+	newApp := rest_app.NewApp(ctx, cfg)
+	newAppGRPC := grpc_app.NewAppGRPC(ctx, cfg)
 
 	var wg sync.WaitGroup
 
@@ -32,7 +33,7 @@ func main() {
 
 	go func() {
 		defer wg.Done()
-		if err := newApp.StartHTTP(); err != nil {
+		if err := newApp.Start(); err != nil {
 			logrus.Fatalf("Не удалось запустить приложение: %+v", err)
 		}
 	}()

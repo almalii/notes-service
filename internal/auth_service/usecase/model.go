@@ -7,9 +7,9 @@ import (
 )
 
 type UserInput struct {
-	Username string
-	Email    string
-	Password string
+	Username string `json:"username" validate:"required,alphanum,min=3,max=20"`
+	Email    string `json:"email" validate:"required,emailRFC,min=5,max=254"`
+	Password string `json:"password" validate:"required,security"`
 }
 
 type UserOutput struct {
@@ -22,8 +22,8 @@ type UserOutput struct {
 }
 
 type AuthInput struct {
-	Email    string
-	Password string
+	Email    string `json:"email" validate:"required,email,min=5,max=254"`
+	Password string `json:"password" validate:"required,min=6,max=30"`
 }
 
 func NewUserOutput(username, email, passwordHash string) service.CreateUser {

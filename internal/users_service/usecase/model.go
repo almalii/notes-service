@@ -9,9 +9,9 @@ import (
 
 type UpdateUserInput struct {
 	InitiatorID uuid.UUID
-	Username    *string
-	Email       *string
-	Password    *string
+	Username    *string `json:"username" validators:"required,alphanum,min=3,max=20"`
+	Email       *string `json:"email" validate:"required,emailRFC,min=5,max=254"`
+	Password    *string `json:"password" validate:"required,security"`
 }
 
 func NewUpdateUserToService(username, email, password *string) service.UpdateUser {
@@ -21,11 +21,4 @@ func NewUpdateUserToService(username, email, password *string) service.UpdateUse
 		Password:  password,
 		UpdatedAt: time.Now().UTC(),
 	}
-}
-
-type AuthInput struct {
-	ID       uuid.UUID
-	Username string
-	Email    string
-	Password string
 }
