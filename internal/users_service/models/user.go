@@ -19,17 +19,3 @@ type AuthOutput struct {
 	Email    string
 	Password string
 }
-
-type AuthResponse struct {
-	ID       uuid.UUID `json:"id"`
-	Username string    `json:"username"`
-	Email    string    `json:"email"`
-}
-
-func NewAuthResponse(resp AuthOutput) AuthResponse {
-	return AuthResponse{
-		ID:       resp.ID,
-		Username: resp.Username,
-		Email:    resp.Email,
-	}
-}

@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"net/http"
-	"notes-rew/internal/middlewares"
 	"notes-rew/internal/notes_service/controller"
 	"notes-rew/internal/notes_service/models"
 	"notes-rew/internal/notes_service/usecase"
@@ -31,7 +30,6 @@ type NoteController struct {
 
 func (c *NoteController) Register(r chi.Router) {
 	r.Route("/notes", func(r chi.Router) {
-		r.Use(middlewares.SessionMiddleware)
 		r.Post("/", c.CreateNoteHandler)
 		r.Get("/{id}", c.GetNoteHandler)
 		r.Get("/", c.GetAllNotesHandler)

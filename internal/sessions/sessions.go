@@ -2,46 +2,36 @@ package sessions
 
 import (
 	"crypto/rand"
-	"encoding/hex"
+	"encoding/base64"
 	"github.com/sirupsen/logrus"
 	"time"
 )
 
-const duration = 2 * time.Hour
+const duration = 24 * time.Hour
 
 type Session struct {
 	ID        string
 	Values    map[string]interface{}
 	CreatedAt time.Time
-	ExpiresAt time.Time
-	Options   *Options
+	ExpiresAt time.Duration
 }
 
-type Options struct {
-	HttpOnly bool
-	Secure   bool
-	SameSite string
-}
-
-// NewSession создает новый сеанс.
 func NewSession() *Session {
 	return &Session{
-		ID:        GenerateUniqueID(),
+		ID:        generateToken(),
 		CreatedAt: time.Now().UTC(),
-		ExpiresAt: time.Now().UTC().Add(duration),
+		ExpiresAt: duration,
 		Values:    make(map[string]interface{}),
 	}
 }
 
-func GenerateUniqueID() string {
-	bytes := make([]byte, 32)
-	_, err := rand.Read(bytes)
+func generateToken() string {
+	b := make([]byte, 32)
+	_, err := rand.Read(b)
 	if err != nil {
 		logrus.Error("error while generating random bytes")
 		return err.Error()
 	}
-	// Преобразование случайных байтов в строку в формате UUID
-	uuIdentification := hex.EncodeToString(bytes)
 
-	return uuIdentification
+	return base64.RawURLEncoding.EncodeToString(b)
 }

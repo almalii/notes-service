@@ -30,7 +30,6 @@ type UserController struct {
 
 func (c *UserController) Register(r chi.Router) {
 	r.Route("/users", func(r chi.Router) {
-		//r.Use(middlewares.SessionMiddleware)
 		r.Get("/", c.GetUserHandler)
 		r.Put("/", c.UpdateUserHandler)
 		r.Delete("/", c.DeleteUserHandler)
@@ -186,6 +185,11 @@ func (c *UserController) DeleteUserHandler(w http.ResponseWriter, r *http.Reques
 
 	valueUserID := getSession.Values["userID"]
 	currentUserID, err := uuid.Parse(valueUserID.(string))
+	if err != nil {
+		logrus.Error("error parsing user id: ", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	_, err = c.usecase.ReadUser(ctx, currentUserID)
 	if err != nil {

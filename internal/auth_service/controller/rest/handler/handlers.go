@@ -29,7 +29,6 @@ type AuthController struct {
 
 func (c *AuthController) Register(r chi.Router) {
 	r.Route("/auth", func(r chi.Router) {
-		//r.Use(middlewares.SessionMiddleware)
 		r.Post("/register", c.SignUpHandler)
 		r.Post("/login", c.SignInHandler)
 		r.Post("/logout", c.SignOutHandler)
