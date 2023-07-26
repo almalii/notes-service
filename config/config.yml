@@ -13,5 +13,12 @@ http_server:
     write_timeout: "10"
     max_header_bytes: "1"
 
+grpc_server:
+    address: "localhost:8091"
+    gateway_address: "localhost:8090"
+    read_timeout: "10"
+    write_timeout: "10"
+    max_header_bytes: "1"
+
 
 migrations_dir: "../internal/db/migrations/"

@@ -5,6 +5,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"notes-rew/internal/app"
 	"notes-rew/internal/config"
+	"sync"
 )
 
 func main() {
@@ -16,14 +17,26 @@ func main() {
 	ctx := context.Background()
 
 	newApp := app.NewApp(ctx, cfg)
-	newAppGRPC := app.NewAppGRPC(ctx)
+	newAppGRPC := app.NewAppGRPC(ctx, cfg)
 
-	if err := newAppGRPC.StartGRPC(); err != nil {
-		logrus.Fatalf("Failed to run GRPC app: %+v", err)
-	}
+	var wg sync.WaitGroup
 
-	if err := newApp.Start(); err != nil {
-		logrus.Fatalf("Failed to run app: %+v", err)
-	}
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		if err := newAppGRPC.StartGRPC(); err != nil {
+			logrus.Fatalf("Не удалось запустить GRPC-сервер: %+v", err)
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		if err := newApp.StartHTTP(); err != nil {
+			logrus.Fatalf("Не удалось запустить приложение: %+v", err)
+		}
+	}()
+
+	wg.Wait()
 
 }

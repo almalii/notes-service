@@ -44,16 +44,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type Deps struct {
-	AuthHandler  pb_auth_service.AuthServiceServer
-	UsersHandler pb_users_service.UserServiceServer
-	NotesHandler pb_notes_service.NotesServiceServer
-}
-
 type AppGRPC struct {
-	Deps
 	srv *grpc.Server
 	ctx context.Context
+	cfg config.Config
 }
 
 type App struct {
@@ -109,58 +103,81 @@ func NewApp(ctx context.Context, cfg config.Config) *App {
 	}
 }
 
-func NewAppGRPC(ctx context.Context) *AppGRPC {
+func NewAppGRPC(ctx context.Context, cfg config.Config) *AppGRPC {
 	return &AppGRPC{
 		srv: grpc.NewServer(),
 		ctx: ctx,
+		cfg: cfg,
 	}
 }
 
 func (ap *AppGRPC) StartGRPC() error {
-
-	pb_auth_service.RegisterAuthServiceServer(ap.srv, authControllerGRPC.NewAuthServer(pb_auth_service.UnimplementedAuthServiceServer{}))
-	pb_users_service.RegisterUserServiceServer(ap.srv, usersControllerGRPC.NewUsersServer(pb_users_service.UnimplementedUserServiceServer{}))
-	pb_notes_service.RegisterNotesServiceServer(ap.srv, notesControllerGRPC.NewNotesServer(pb_notes_service.UnimplementedNotesServiceServer{}))
-
-	reflection.Register(ap.srv)
-
-	listener, err := net.Listen("tcp", "localhost:8090")
+	listener, err := net.Listen("tcp", ap.cfg.GRPCServer.Address)
 	if err != nil {
 		logrus.Fatalf("Failed to listen: %+v", err)
 	}
 
+	pb_auth_service.RegisterAuthServiceServer(
+		ap.srv,
+		authControllerGRPC.NewAuthServer(pb_auth_service.UnimplementedAuthServiceServer{}),
+	)
+	pb_users_service.RegisterUsersServiceServer(
+		ap.srv,
+		usersControllerGRPC.NewUsersServer(pb_users_service.UnimplementedUsersServiceServer{}),
+	)
+	pb_notes_service.RegisterNotesServiceServer(
+		ap.srv,
+		notesControllerGRPC.NewNotesServer(pb_notes_service.UnimplementedNotesServiceServer{}),
+	)
+
+	reflection.Register(ap.srv)
+
 	mux := runtime.NewServeMux()
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 
-	err = pb_auth_service.RegisterAuthServiceHandlerFromEndpoint(ap.ctx, mux, ":8090", opts)
-	if err != nil {
+	if err = pb_auth_service.RegisterAuthServiceHandlerFromEndpoint(
+		ap.ctx,
+		mux,
+		ap.cfg.GRPCServer.Address,
+		opts,
+	); err != nil {
 		logrus.Fatalf("Failed to register auth service v1: %+v", err)
 	}
-	err = pb_users_service.RegisterUserServiceHandlerFromEndpoint(ap.ctx, mux, ":8090", opts)
-	if err != nil {
+
+	if err = pb_users_service.RegisterUsersServiceHandlerFromEndpoint(
+		ap.ctx,
+		mux,
+		ap.cfg.GRPCServer.Address,
+		opts,
+	); err != nil {
 		logrus.Fatalf("Failed to register users service v1: %+v", err)
 	}
-	err = pb_notes_service.RegisterNotesServiceHandlerFromEndpoint(ap.ctx, mux, ":8090", opts)
-	if err != nil {
+
+	if err = pb_notes_service.RegisterNotesServiceHandlerFromEndpoint(
+		ap.ctx,
+		mux,
+		ap.cfg.GRPCServer.Address,
+		opts,
+	); err != nil {
 		logrus.Fatalf("Failed to register notes service v1: %+v", err)
 	}
 
 	g, _ := errgroup.WithContext(ap.ctx)
 
 	g.Go(func() error {
-		logrus.Println("grpc server started on address:", "localhost:8090")
+		log.Println("grpc server started on address:", ap.cfg.GRPCServer.Address)
 		return ap.srv.Serve(listener)
 	})
 
 	g.Go(func() error {
-		logrus.Println("grpc-gateway server started on address:", "localhost:8080")
-		return http.ListenAndServe("localhost:8080", mux)
+		log.Println("grpc-gateway server started on address:", ap.cfg.GRPCServer.GateWayAddress)
+		return http.ListenAndServe(ap.cfg.GRPCServer.GateWayAddress, mux)
 	})
 
 	return g.Wait()
 }
 
-func (a *App) Start() error {
+func (a *App) StartHTTP() error {
 	httpServer := &http.Server{
 		Addr:           a.cfg.HTTPServer.Address,
 		Handler:        a.router,

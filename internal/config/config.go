@@ -12,6 +12,7 @@ import (
 type Config struct {
 	DB            DB         `yaml:"data_base"`
 	HTTPServer    HTTPServer `yaml:"http_server"`
+	GRPCServer    GRPCServer `yaml:"grpc_server"`
 	MigrationsDir string     `yaml:"migrations_dir" env:"MIGRATIONS_DIR"`
 	Session       string     `yaml:"sessions" env:"SESSION"`
 	Salt          string     `yaml:"salt" env:"SALT"`
@@ -29,6 +30,11 @@ type DB struct {
 
 type HTTPServer struct {
 	Address string `yaml:"address" env:"HTTP_SERVER_ADDRESS"`
+}
+
+type GRPCServer struct {
+	Address        string `yaml:"address" env:"GRPC_SERVER_ADDRESS"`
+	GateWayAddress string `yaml:"gateway_address" env:"GRPC_GATEWAY_ADDRESS"`
 }
 
 const (

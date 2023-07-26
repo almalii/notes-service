@@ -9,11 +9,11 @@ import (
 )
 
 type UsersServer struct {
-	pb_users_service.UnimplementedUserServiceServer
+	pb_users_service.UnimplementedUsersServiceServer
 }
 
-func NewUsersServer(unimplementedUsersServiceServer pb_users_service.UnimplementedUserServiceServer) *UsersServer {
-	return &UsersServer{UnimplementedUserServiceServer: unimplementedUsersServiceServer}
+func NewUsersServer(unimplementedUsersServiceServer pb_users_service.UnimplementedUsersServiceServer) *UsersServer {
+	return &UsersServer{UnimplementedUsersServiceServer: unimplementedUsersServiceServer}
 }
 
 func (u *UsersServer) GetUser(context.Context, *pb_users_model.UserIDRequest) (*pb_users_model.UserResponse, error) {
