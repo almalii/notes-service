@@ -12,15 +12,6 @@ type UserInput struct {
 	Password string `json:"password" validate:"required,security"`
 }
 
-type UserOutput struct {
-	ID           uuid.UUID
-	Username     string
-	Email        string
-	PasswordHash string
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-}
-
 type AuthInput struct {
 	Email    string `json:"email" validate:"required,email,min=5,max=254"`
 	Password string `json:"password" validate:"required,min=6,max=30"`
@@ -34,12 +25,5 @@ func NewUserOutput(username, email, passwordHash string) service.CreateUser {
 		PasswordHash: passwordHash,
 		CreatedAt:    time.Now().UTC(),
 		UpdatedAt:    time.Now().UTC(),
-	}
-}
-
-func NewAuthInput(email, password string) service.SignInInput {
-	return service.SignInInput{
-		Email:    email,
-		Password: password,
 	}
 }

@@ -6,9 +6,9 @@ require github.com/google/uuid v1.3.0
 
 require (
 	github.com/Masterminds/squirrel v1.5.4
-	github.com/almalii/grpc-contracts/gen/go/auth_service v0.0.0-20230726135108-f9e32375a5c5
-	github.com/almalii/grpc-contracts/gen/go/notes_service v0.0.0-20230726135108-f9e32375a5c5
-	github.com/almalii/grpc-contracts/gen/go/users_service v0.0.0-20230726135108-f9e32375a5c5
+	github.com/almalii/grpc-contracts/gen/go/auth_service v0.0.0-20230727092926-cdfcd6e1395a
+	github.com/almalii/grpc-contracts/gen/go/notes_service v0.0.0-20230727094229-27e50825f289
+	github.com/almalii/grpc-contracts/gen/go/users_service v0.0.0-20230727092926-cdfcd6e1395a
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/go-playground/validator/v10 v10.14.1
 	github.com/gorilla/sessions v1.2.1
@@ -20,8 +20,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	go.mongodb.org/mongo-driver v1.12.0
 	golang.org/x/crypto v0.11.0
-	golang.org/x/sync v0.3.0
-	google.golang.org/grpc v1.56.2
+	google.golang.org/grpc v1.57.0
 	google.golang.org/protobuf v1.31.0
 )
 
@@ -51,11 +50,12 @@ require (
 	github.com/xdg-go/stringprep v1.0.4 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
 	golang.org/x/net v0.12.0 // indirect
+	golang.org/x/sync v0.3.0 // indirect
 	golang.org/x/sys v0.10.0 // indirect
 	golang.org/x/text v0.11.0 // indirect
-	google.golang.org/genproto v0.0.0-20230725213213-b022f6e96895 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20230725213213-b022f6e96895 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20230725213213-b022f6e96895 // indirect
+	google.golang.org/genproto v0.0.0-20230726155614-23370e0ffb3e // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20230726155614-23370e0ffb3e // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20230726155614-23370e0ffb3e // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	olympos.io/encoding/edn v0.0.0-20201019073823-d3554ca0b0a3 // indirect
 

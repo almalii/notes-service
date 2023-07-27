@@ -33,8 +33,6 @@ func (u *UserUsecase) UpdateUser(ctx context.Context, req UpdateUserInput) error
 		logrus.Errorf("hash password error: %s", err)
 	}
 
-	// TODO check users_service can update users_service ( то есть это он )
-
 	userUpdate := NewUpdateUserToService(req.Username, req.Email, &hashedPassword)
 
 	err = u.service.UpdateUserByID(ctx, req.InitiatorID, userUpdate)

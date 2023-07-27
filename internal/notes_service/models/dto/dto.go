@@ -3,6 +3,7 @@ package dto
 import (
 	pb_notes_model "github.com/almalii/grpc-contracts/gen/go/notes_service/model/v1"
 	"github.com/google/uuid"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"notes-rew/internal/notes_service/models"
 	"notes-rew/internal/notes_service/usecase"
 )
@@ -16,13 +17,9 @@ func NewCreateNoteInput(currentUser uuid.UUID, req *pb_notes_model.CreateNoteReq
 	}
 }
 
-func NewCreateNoteResponse(idNote uuid.UUID, resp usecase.CreateNoteInput) *pb_notes_model.NoteResponse {
-	return &pb_notes_model.NoteResponse{
-		Id:    idNote.String(),
-		Title: resp.Title,
-		Body:  resp.Body,
-		//Tags:  resp.Tags, TODO: update contract
-		Author: resp.Author.String(),
+func NewCreateNoteResponse(idNote uuid.UUID) *pb_notes_model.NoteIDResponse {
+	return &pb_notes_model.NoteIDResponse{
+		Id: idNote.String(),
 	}
 }
 
@@ -34,15 +31,20 @@ func NewGetNoteInput(req *pb_notes_model.NoteIDRequest) uuid.UUID {
 	return noteID
 }
 
-func NewGetNoteResponse(resp models.NoteOutput) *pb_notes_model.NoteResponse {
-	return &pb_notes_model.NoteResponse{
-		Id:    resp.ID.String(),
-		Title: resp.Title,
-		Body:  resp.Body,
-		//Tags:  resp.Tags, TODO: update contract
+func NewGetNoteResponse(resp models.NoteOutput) *pb_notes_model.GetNoteResponse {
+	var tagsList []*pb_notes_model.TagsList
+	for _, tag := range resp.Tags {
+		tagsList = append(tagsList, &pb_notes_model.TagsList{Tags: []string{tag}})
+	}
+
+	return &pb_notes_model.GetNoteResponse{
+		Id:        resp.ID.String(),
+		Title:     resp.Title,
+		Body:      resp.Body,
+		Tags:      tagsList, //TODO: wtf?
 		Author:    resp.Author.String(),
-		CreatedAt: resp.CreatedAt.String(), //TODO: изменить на timestamp
-		UpdatedAt: resp.UpdatedAt.String(), //TODO: изменить на timestamp
+		CreatedAt: timestamppb.New(resp.CreatedAt),
+		UpdatedAt: timestamppb.New(resp.UpdatedAt),
 	}
 }
 
@@ -55,7 +57,7 @@ func NewGetNotesInput(req *pb_notes_model.AuthorIDRequest) uuid.UUID {
 }
 
 func NewGetNotesResponse(resp []models.NoteOutput) *pb_notes_model.NoteResponseList {
-	var notes []*pb_notes_model.NoteResponse
+	var notes []*pb_notes_model.GetNoteResponse
 	for _, note := range resp {
 		notes = append(notes, NewGetNoteResponse(note))
 	}
@@ -66,20 +68,25 @@ func NewGetNotesResponse(resp []models.NoteOutput) *pb_notes_model.NoteResponseL
 }
 
 func NewUpdateNoteInput(req *pb_notes_model.UpdateNoteRequest) usecase.UpdateNoteInput {
+
 	return usecase.UpdateNoteInput{
 		Title: req.Title,
 		Body:  req.Body,
-		//Tags:   req.Tags, TODO: update contract
+		//Tags:  req.Tags, //TODO: update contract
 	}
 }
 
-func NewUpdateNoteResponse(noteId, authorId uuid.UUID, resp usecase.UpdateNoteInput) *pb_notes_model.NoteResponse {
-	return &pb_notes_model.NoteResponse{
-		Id:    noteId.String(),
-		Title: *resp.Title,
-		Body:  *resp.Body,
-		//Tags:  *resp.Tags, TODO: update contract
-		Author: authorId.String(),
+func NewUpdateNoteResponse(resp usecase.UpdateNoteInput) *pb_notes_model.UpdateNoteResponse {
+	var tagsList []*pb_notes_model.TagsList
+	for _, tag := range *resp.Tags {
+		tagsList = append(tagsList, &pb_notes_model.TagsList{Tags: []string{tag}})
+	}
+
+	return &pb_notes_model.UpdateNoteResponse{
+		Title:     *resp.Title,
+		Body:      *resp.Body,
+		Tags:      tagsList, //TODO: wtf?
+		UpdatedAt: timestamppb.New(resp.UpdatedAt),
 	}
 }
 

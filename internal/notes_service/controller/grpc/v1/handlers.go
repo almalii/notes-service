@@ -12,7 +12,6 @@ import (
 	"notes-rew/internal/notes_service/models"
 	"notes-rew/internal/notes_service/models/dto"
 	"notes-rew/internal/notes_service/usecase"
-	"time"
 )
 
 type NoteUsecase interface {
@@ -41,7 +40,7 @@ func NewNotesServer(
 	}
 }
 
-func (n *NotesServer) CreateNote(ctx context.Context, req *pb_notes_model.CreateNoteRequest) (*pb_notes_model.NoteResponse, error) {
+func (n *NotesServer) CreateNote(ctx context.Context, req *pb_notes_model.CreateNoteRequest) (*pb_notes_model.NoteIDResponse, error) {
 	currentUserID := uuid.UUID{} //TODO: заглушка
 
 	input := dto.NewCreateNoteInput(currentUserID, req)
@@ -57,15 +56,14 @@ func (n *NotesServer) CreateNote(ctx context.Context, req *pb_notes_model.Create
 		return nil, err
 	}
 
-	resp := dto.NewCreateNoteResponse(noteID, input)
-	resp.CreatedAt = time.Now().UTC().String() //TODO: изменить на timestamp
+	resp := dto.NewCreateNoteResponse(noteID)
 
 	return resp, nil
 }
 
-func (n *NotesServer) GetNote(ctx context.Context, req *pb_notes_model.NoteIDRequest) (*pb_notes_model.NoteResponse, error) {
+func (n *NotesServer) GetNote(ctx context.Context, req *pb_notes_model.NoteIDRequest) (*pb_notes_model.GetNoteResponse, error) {
 	noteID := dto.NewGetNoteInput(req)
-	currentUserID := uuid.UUID{} //TODO: заглушка
+	//currentUserID := uuid.UUID{} //TODO: заглушка
 
 	note, err := n.usecase.ReadNote(ctx, noteID)
 	if err != nil {
@@ -73,10 +71,10 @@ func (n *NotesServer) GetNote(ctx context.Context, req *pb_notes_model.NoteIDReq
 		return nil, err
 	}
 
-	if note.Author != currentUserID {
-		logrus.Error("user is not author of this note")
-		return nil, fmt.Errorf("user is not author of this note")
-	}
+	//if note.Author != currentUserID {
+	//	logrus.Error("user is not author of this note")
+	//	return nil, fmt.Errorf("user is not author of this note")
+	//}
 
 	resp := dto.NewGetNoteResponse(note)
 
@@ -97,7 +95,7 @@ func (n *NotesServer) GetNotes(ctx context.Context, req *pb_notes_model.AuthorID
 	return resp, nil
 }
 
-func (n *NotesServer) UpdateNote(ctx context.Context, req *pb_notes_model.UpdateNoteRequest) (*pb_notes_model.NoteResponse, error) {
+func (n *NotesServer) UpdateNote(ctx context.Context, req *pb_notes_model.UpdateNoteRequest) (*pb_notes_model.UpdateNoteResponse, error) {
 	input := dto.NewUpdateNoteInput(req)
 
 	if err := n.validator.Struct(input); err != nil {
@@ -126,7 +124,7 @@ func (n *NotesServer) UpdateNote(ctx context.Context, req *pb_notes_model.Update
 		return nil, err
 	}
 
-	resp := dto.NewUpdateNoteResponse(noteID, note.Author, input)
+	resp := dto.NewUpdateNoteResponse(input)
 
 	return resp, nil
 }
