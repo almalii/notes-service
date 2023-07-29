@@ -14,7 +14,7 @@ type Config struct {
 	HTTPServer    HTTPServer `yaml:"http_server"`
 	GRPCServer    GRPCServer `yaml:"grpc_server"`
 	MigrationsDir string     `yaml:"migrations_dir" env:"MIGRATIONS_DIR"`
-	Session       string     `yaml:"sessions" env:"SESSION"`
+	JwtSigning    string     `yaml:"jwt_signing" env:"JWT_SIGNING"`
 	Salt          string     `yaml:"salt" env:"SALT"`
 }
 

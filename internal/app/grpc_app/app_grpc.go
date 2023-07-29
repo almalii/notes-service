@@ -15,21 +15,24 @@ import (
 	"net/http"
 	authControllerGRPC "notes-rew/internal/auth_service/controller/grpc/v1"
 	authService "notes-rew/internal/auth_service/service"
-	authStorage "notes-rew/internal/auth_service/storage"
+	authStorage "notes-rew/internal/auth_service/storage/postgres"
 	authUsecase "notes-rew/internal/auth_service/usecase"
 	"notes-rew/internal/config"
 	"notes-rew/internal/db/migrations"
 	"notes-rew/internal/db/postgres"
 	"notes-rew/internal/hash"
+	"notes-rew/internal/middlewares"
 	notesControllerGRPC "notes-rew/internal/notes_service/controller/grpc/v1"
 	notesService "notes-rew/internal/notes_service/service"
-	notesStorage "notes-rew/internal/notes_service/storage"
+	notesStorage "notes-rew/internal/notes_service/storage/postgres"
 	notesUsecase "notes-rew/internal/notes_service/usecase"
+	"notes-rew/internal/token_manager"
 	usersControllerGRPC "notes-rew/internal/users_service/controller/grpc/v1"
 	usersService "notes-rew/internal/users_service/service"
-	usersStorage "notes-rew/internal/users_service/storage"
+	usersStorage "notes-rew/internal/users_service/storage/postgres"
 	usersUsecase "notes-rew/internal/users_service/usecase"
 	"notes-rew/internal/validators"
+	"time"
 )
 
 type grpcService struct {
@@ -39,11 +42,12 @@ type grpcService struct {
 }
 
 type AppGRPC struct {
-	grpcServer    *grpc.Server
-	httpServer    *http.Server
-	serviceServer grpcService
-	ctx           context.Context
-	cfg           config.Config
+	protoService grpcService
+	grpcServer   *grpc.Server
+	httpServer   *http.Server
+	tokenManager token_manager.TokenManager
+	ctx          context.Context
+	cfg          config.Config
 }
 
 func NewAppGRPC(ctx context.Context, cfg config.Config) *AppGRPC {
@@ -59,14 +63,14 @@ func NewAppGRPC(ctx context.Context, cfg config.Config) *AppGRPC {
 	validation := validator.New()
 	validators.RegisterCustomValidation(validation)
 
+	tokenManager := token_manager.NewTokenManager(cfg.JwtSigning)
 	hasher := hash.NewPasswordHasher(cfg.Salt)
 
 	authsStorage := authStorage.NewUserStorage(connectDB)
 	authsService := authService.NewAuthService(authsStorage)
-	authsUsecase := authUsecase.NewAuthUsecase(authsService, hasher)
+	authsUsecase := authUsecase.NewAuthUsecase(authsService, hasher, tokenManager, validation)
 	authsControllerGRPC := authControllerGRPC.NewAuthServer(
 		authsUsecase,
-		validation,
 		pb_auth_service.UnimplementedAuthServiceServer{},
 	)
 
@@ -89,10 +93,11 @@ func NewAppGRPC(ctx context.Context, cfg config.Config) *AppGRPC {
 	)
 
 	return &AppGRPC{
-		grpcServer: grpc.NewServer(),
-		ctx:        ctx,
-		cfg:        cfg,
-		serviceServer: grpcService{
+		grpcServer:   grpc.NewServer(),
+		ctx:          ctx,
+		cfg:          cfg,
+		tokenManager: tokenManager,
+		protoService: grpcService{
 			auth:  authsControllerGRPC,
 			users: userControllerGRPC,
 			notes: noteControllerGRPC,
@@ -106,21 +111,28 @@ func (ap *AppGRPC) StartGRPC() error {
 		logrus.Fatalf("Failed to listen: %+v", err)
 	}
 
-	var serverOptions []grpc.ServerOption
+	serverOptions := []grpc.ServerOption{
+		grpc.UnaryInterceptor(middlewares.UnaryTokenInterceptor(ap.tokenManager)),
+	}
 
 	ap.grpcServer = grpc.NewServer(serverOptions...)
 
-	pb_auth_service.RegisterAuthServiceServer(ap.grpcServer, ap.serviceServer.auth)
-	pb_users_service.RegisterUsersServiceServer(ap.grpcServer, ap.serviceServer.users)
-	pb_notes_service.RegisterNotesServiceServer(ap.grpcServer, ap.serviceServer.notes)
+	pb_auth_service.RegisterAuthServiceServer(ap.grpcServer, ap.protoService.auth)
+	pb_users_service.RegisterUsersServiceServer(ap.grpcServer, ap.protoService.users)
+	pb_notes_service.RegisterNotesServiceServer(ap.grpcServer, ap.protoService.notes)
 
 	reflection.Register(ap.grpcServer)
 
-	return ap.grpcServer.Serve(listener)
+	if err := ap.grpcServer.Serve(listener); err != nil {
+		logrus.Fatalf("Failed to start gRPC server: %+v", err)
+	}
+
+	return nil
 }
 
 func (ap *AppGRPC) StartHTTP() error {
 	mux := runtime.NewServeMux()
+
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 
 	if err := pb_auth_service.RegisterAuthServiceHandlerFromEndpoint(
@@ -129,7 +141,7 @@ func (ap *AppGRPC) StartHTTP() error {
 		ap.cfg.GRPCServer.Address,
 		opts,
 	); err != nil {
-		logrus.Fatalf("Failed to register auth service v1: %+v", err)
+		logrus.Fatalf("Failed to register gRPC-Gateway auth service v1: %+v", err)
 	}
 
 	if err := pb_users_service.RegisterUsersServiceHandlerFromEndpoint(
@@ -138,7 +150,7 @@ func (ap *AppGRPC) StartHTTP() error {
 		ap.cfg.GRPCServer.Address,
 		opts,
 	); err != nil {
-		logrus.Fatalf("Failed to register users service v1: %+v", err)
+		logrus.Fatalf("Failed to register gRPC-Gateway users service v1: %+v", err)
 	}
 
 	if err := pb_notes_service.RegisterNotesServiceHandlerFromEndpoint(
@@ -147,9 +159,20 @@ func (ap *AppGRPC) StartHTTP() error {
 		ap.cfg.GRPCServer.Address,
 		opts,
 	); err != nil {
-		logrus.Fatalf("Failed to register notes service v1: %+v", err)
+		logrus.Fatalf("Failed to register gRPC-Gateway notes service v1: %+v", err)
 	}
 
-	return http.ListenAndServe(ap.cfg.HTTPServer.Address, mux)
+	ap.httpServer = &http.Server{
+		Addr:         ap.cfg.HTTPServer.Address,
+		Handler:      mux,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
+
+	if err := ap.httpServer.ListenAndServe(); err != nil {
+		logrus.Fatalf("Failed to start gRPC-Gateway server: %+v", err)
+	}
+
+	return nil
 
 }

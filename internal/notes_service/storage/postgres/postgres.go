@@ -1,4 +1,4 @@
-package storage
+package postgres
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"notes-rew/internal/notes_service/models"
 	"notes-rew/internal/notes_service/service"
+	"notes-rew/internal/notes_service/storage"
 )
 
 type NoteStorage struct {
@@ -33,7 +34,7 @@ func (s *NoteStorage) CreateNoteByID(ctx context.Context, note service.CreateNot
 }
 
 func (s *NoteStorage) GetNoteByID(ctx context.Context, id uuid.UUID) (models.NoteOutput, error) {
-	var note NoteResponse
+	var note storage.NoteResponse
 
 	sql, args, err := squirrel.Select("id", "title", "body", "tags", "author", "created_at", "updated_at").
 		From("notes").

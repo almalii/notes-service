@@ -1,4 +1,4 @@
-package storage
+package postgres
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"notes-rew/internal/auth_service/models"
 	"notes-rew/internal/auth_service/service"
+	"notes-rew/internal/auth_service/storage"
 )
 
 type UserStorage struct {
@@ -32,7 +33,7 @@ func (s *UserStorage) SaveUserToDB(ctx context.Context, user service.CreateUser)
 }
 
 func (s *UserStorage) GetUserForAuth(ctx context.Context, email string) (models.AuthOutput, error) {
-	var user AuthResponse
+	var user storage.AuthResponse
 
 	sql, args, err := squirrel.Select("id", "username", "email", "password").
 		From("users").
@@ -54,35 +55,9 @@ func (s *UserStorage) GetUserForAuth(ctx context.Context, email string) (models.
 		return models.AuthOutput{}, err
 	}
 
-	resp := NewAuthResponse(user.ID, user.Username, user.Email, user.PasswordHash)
+	resp := storage.NewAuthResponse(user.ID, user.Username, user.Email, user.PasswordHash)
 
 	return resp, nil
-}
-
-func (s *UserStorage) CheckUserByEmail(ctx context.Context, email string) (bool, error) {
-	var count int
-
-	sql, args, err := squirrel.Select("count(*)").
-		From("users").
-		Where(squirrel.Eq{"email": email}).
-		PlaceholderFormat(squirrel.Dollar).ToSql()
-
-	if err != nil {
-		logrus.Errorf("error while building squirrel query: %v", err)
-		return false, err
-	}
-
-	err = s.db.QueryRow(ctx, sql, args...).Scan(&count)
-	if err != nil {
-		logrus.Errorf("error while getting count by email: %v", err)
-		return false, err
-	}
-
-	if count > 0 {
-		return true, nil
-	}
-
-	return false, nil
 }
 
 func NewUserStorage(db *pgx.Conn) *UserStorage {

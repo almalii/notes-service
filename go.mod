@@ -6,13 +6,13 @@ require github.com/google/uuid v1.3.0
 
 require (
 	github.com/Masterminds/squirrel v1.5.4
-	github.com/almalii/grpc-contracts/gen/go/auth_service v0.0.0-20230727092926-cdfcd6e1395a
-	github.com/almalii/grpc-contracts/gen/go/notes_service v0.0.0-20230727094229-27e50825f289
-	github.com/almalii/grpc-contracts/gen/go/users_service v0.0.0-20230727092926-cdfcd6e1395a
+	github.com/almalii/grpc-contracts/gen/go/auth_service v0.0.0-20230727100522-bf0abcd44950
+	github.com/almalii/grpc-contracts/gen/go/notes_service v0.0.0-20230727100522-bf0abcd44950
+	github.com/almalii/grpc-contracts/gen/go/users_service v0.0.0-20230727100522-bf0abcd44950
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/go-playground/validator/v10 v10.14.1
-	github.com/gorilla/sessions v1.2.1
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.1
+	github.com/golang-jwt/jwt/v5 v5.0.0
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.2
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/jackc/pgx/v5 v5.4.2
 	github.com/pressly/goose/v3 v3.14.0
@@ -33,7 +33,6 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
-	github.com/gorilla/securecookie v1.1.1 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
 	github.com/joho/godotenv v1.5.1 // indirect

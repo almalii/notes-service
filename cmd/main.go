@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"encoding/gob"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"notes-rew/internal/app/grpc_app"
 	"notes-rew/internal/app/rest_app"
@@ -10,7 +12,7 @@ import (
 )
 
 func main() {
-
+	gob.Register(uuid.UUID{})
 	logrus.SetFormatter(&logrus.JSONFormatter{})
 	//logrus.SetLevel(logrus.DebugLevel)
 

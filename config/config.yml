@@ -22,3 +22,7 @@ grpc_server:
 
 
 migrations_dir: "../internal/db/migrations/"
+# salt for password hashing (to .env)
+# jwt_signing (to .env)
+
+

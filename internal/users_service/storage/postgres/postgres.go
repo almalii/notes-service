@@ -1,4 +1,4 @@
-package storage
+package postgres
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"notes-rew/internal/users_service/models"
 	"notes-rew/internal/users_service/service"
+	"notes-rew/internal/users_service/storage"
 )
 
 type PSQLUserStorage struct {
@@ -33,7 +34,7 @@ func (s *PSQLUserStorage) CreateUserByID(ctx context.Context, user service.Creat
 }
 
 func (s *PSQLUserStorage) GetUserByID(ctx context.Context, id uuid.UUID) (models.UserOutput, error) {
-	user := new(UserResponse)
+	user := new(storage.UserResponse)
 
 	sql, args, err := squirrel.Select("id", "username", "email", "created_at", "updated_at").
 		From("users").
@@ -93,7 +94,7 @@ func (s *PSQLUserStorage) DeleteUserByID(ctx context.Context, id uuid.UUID) erro
 }
 
 func (s *PSQLUserStorage) GetUserForAuth(ctx context.Context, email string) (models.AuthOutput, error) {
-	user := new(AuthResponse)
+	user := new(storage.AuthResponse)
 
 	sql, args, err := squirrel.Select("id", "username", "email", "password").
 		From("users").

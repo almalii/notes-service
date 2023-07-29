@@ -7,7 +7,7 @@ import (
 	"net/http"
 	authController "notes-rew/internal/auth_service/controller/rest/handler"
 	authService "notes-rew/internal/auth_service/service"
-	authStorage "notes-rew/internal/auth_service/storage"
+	authStorage "notes-rew/internal/auth_service/storage/postgres"
 	authUsecase "notes-rew/internal/auth_service/usecase"
 	"notes-rew/internal/config"
 	"notes-rew/internal/db/migrations"
@@ -15,12 +15,12 @@ import (
 	"notes-rew/internal/hash"
 	notesController "notes-rew/internal/notes_service/controller/rest/handler"
 	notesService "notes-rew/internal/notes_service/service"
-	notesStorage "notes-rew/internal/notes_service/storage"
+	notesStorage "notes-rew/internal/notes_service/storage/postgres"
 	notesUsecase "notes-rew/internal/notes_service/usecase"
-	"notes-rew/internal/sessions"
+	"notes-rew/internal/token_manager"
 	usersController "notes-rew/internal/users_service/controller/rest/handler"
 	usersService "notes-rew/internal/users_service/service"
-	usersStorage "notes-rew/internal/users_service/storage"
+	usersStorage "notes-rew/internal/users_service/storage/postgres"
 	usersUsecase "notes-rew/internal/users_service/usecase"
 	"notes-rew/internal/validators"
 	"os"
@@ -56,26 +56,25 @@ func NewApp(ctx context.Context, cfg config.Config) *App {
 	validation := validator.New()
 	validators.RegisterCustomValidation(validation)
 
-	sessionStore := sessions.NewRedisSessionStore("localhost:32768", "", 0)
-
+	tokenManager := token_manager.NewTokenManager(cfg.JwtSigning)
 	hasher := hash.NewPasswordHasher(cfg.Salt)
 
 	noteStorage := notesStorage.NewNoteStorage(connectDB)
 	noteService := notesService.NewNoteService(noteStorage)
 	noteUsecase := notesUsecase.NewNoteUsecase(noteService)
-	noteController := notesController.NewNoteController(noteUsecase, validation, sessionStore)
+	noteController := notesController.NewNoteController(noteUsecase, validation, tokenManager)
 	noteController.Register(router)
 
 	userStorage := usersStorage.NewPSQLUserStorage(connectDB)
 	userService := usersService.NewUserService(userStorage)
 	userUsecase := usersUsecase.NewUserUsecase(userService, hasher)
-	userController := usersController.NewUserController(userUsecase, validation, sessionStore)
+	userController := usersController.NewUserController(userUsecase, validation, tokenManager, ctx)
 	userController.Register(router)
 
 	authsStorage := authStorage.NewUserStorage(connectDB)
 	authsService := authService.NewAuthService(authsStorage)
-	authsUsecase := authUsecase.NewAuthUsecase(authsService, hasher)
-	authsController := authController.NewAuthController(authsUsecase, validation, sessionStore)
+	authsUsecase := authUsecase.NewAuthUsecase(authsService, hasher, tokenManager, validation)
+	authsController := authController.NewAuthController(authsUsecase)
 	authsController.Register(router)
 
 	return &App{

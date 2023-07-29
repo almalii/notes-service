@@ -8,10 +8,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"net/http"
+	"notes-rew/internal/middlewares"
 	"notes-rew/internal/notes_service/controller"
 	"notes-rew/internal/notes_service/models"
 	"notes-rew/internal/notes_service/usecase"
-	"notes-rew/internal/sessions"
+	"notes-rew/internal/token_manager"
 )
 
 type NoteUsecase interface {
@@ -25,11 +26,12 @@ type NoteUsecase interface {
 type NoteController struct {
 	usecase      NoteUsecase
 	validator    *validator.Validate
-	sessionStore *sessions.SessionStore
+	tokenManager token_manager.TokenManager
 }
 
 func (c *NoteController) Register(r chi.Router) {
 	r.Route("/notes", func(r chi.Router) {
+		r.Use(middlewares.UserIdentity(c.tokenManager))
 		r.Post("/", c.CreateNoteHandler)
 		r.Get("/{id}", c.GetNoteHandler)
 		r.Get("/", c.GetAllNotesHandler)
@@ -45,32 +47,11 @@ func (c *NoteController) CreateNoteHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	ctx := r.Context()
-
-	currentSessionID, err := sessions.GetSessionByCookie(r, "session-id")
-	if err != nil {
-		logrus.Error("error getting session id from cookie: ", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	getSession, err := c.sessionStore.Get(ctx, currentSessionID)
-	if err != nil {
-		logrus.Error("error getting session store: ", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	valueUserID := getSession.Values["userID"]
-	currentUserID, err := uuid.Parse(valueUserID.(string))
-	if err != nil {
-		logrus.Error("error parsing userID: ", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	currentUserID := ctx.Value("userID").(uuid.UUID)
 
 	var req controller.CreateNoteRequest
 
-	err = json.NewDecoder(r.Body).Decode(&req)
+	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -114,28 +95,7 @@ func (c *NoteController) GetNoteHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	ctx := r.Context()
-
-	currentSessionID, err := sessions.GetSessionByCookie(r, "session-id")
-	if err != nil {
-		logrus.Error("error getting session id from cookie: ", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	getSession, err := c.sessionStore.Get(ctx, currentSessionID)
-	if err != nil {
-		logrus.Error("error getting session store: ", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	valueUserID := getSession.Values["userID"]
-	currentUserID, err := uuid.Parse(valueUserID.(string))
-	if err != nil {
-		logrus.Error("error parsing userID: ", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	currentUserID := ctx.Value("userID").(uuid.UUID)
 
 	noteID := chi.URLParam(r, "id")
 	parsedUUID, err := uuid.Parse(noteID)
@@ -172,28 +132,7 @@ func (c *NoteController) GetAllNotesHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	ctx := r.Context()
-
-	currentSessionID, err := sessions.GetSessionByCookie(r, "session-id")
-	if err != nil {
-		logrus.Error("error getting session id from cookie: ", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	getSession, err := c.sessionStore.Get(ctx, currentSessionID)
-	if err != nil {
-		logrus.Error("error getting session store: ", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	valueUserID := getSession.Values["userID"]
-	currentUserID, err := uuid.Parse(valueUserID.(string))
-	if err != nil {
-		logrus.Error("error parsing userID: ", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	currentUserID := ctx.Value("userID").(uuid.UUID)
 
 	notes, err := c.usecase.ReadAllNotes(ctx, currentUserID)
 	if err != nil {
@@ -217,28 +156,7 @@ func (c *NoteController) UpdateNoteHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	ctx := r.Context()
-
-	currentSessionID, err := sessions.GetSessionByCookie(r, "session-id")
-	if err != nil {
-		logrus.Error("error getting session id from cookie: ", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	getSession, err := c.sessionStore.Get(ctx, currentSessionID)
-	if err != nil {
-		logrus.Error("error getting session store: ", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	valueUserID := getSession.Values["userID"]
-	currentUserID, err := uuid.Parse(valueUserID.(string))
-	if err != nil {
-		logrus.Error("error parsing userID: ", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	currentUserID := ctx.Value("userID").(uuid.UUID)
 
 	noteID := chi.URLParam(r, "id")
 	parsedUUID, err := uuid.Parse(noteID)
@@ -297,28 +215,7 @@ func (c *NoteController) DeleteNoteHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	ctx := r.Context()
-
-	currentSessionID, err := sessions.GetSessionByCookie(r, "session-id")
-	if err != nil {
-		logrus.Error("error getting session id from cookie: ", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	getSession, err := c.sessionStore.Get(ctx, currentSessionID)
-	if err != nil {
-		logrus.Error("error getting session store: ", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	valueUserID := getSession.Values["userID"]
-	currentUserID, err := uuid.Parse(valueUserID.(string))
-	if err != nil {
-		logrus.Error("error parsing userID: ", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	currentUserID := ctx.Value("userID").(uuid.UUID)
 
 	noteID := chi.URLParam(r, "id")
 	parsedUUID, err := uuid.Parse(noteID)
@@ -347,10 +244,10 @@ func (c *NoteController) DeleteNoteHandler(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func NewNoteController(usecase NoteUsecase, validator *validator.Validate, sessionStore *sessions.SessionStore) *NoteController {
+func NewNoteController(usecase NoteUsecase, validator *validator.Validate, tokenManager token_manager.TokenManager) *NoteController {
 	return &NoteController{
 		usecase:      usecase,
 		validator:    validator,
-		sessionStore: sessionStore,
+		tokenManager: tokenManager,
 	}
 }

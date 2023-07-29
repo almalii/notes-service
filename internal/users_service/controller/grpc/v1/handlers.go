@@ -40,7 +40,7 @@ func NewUsersServer(
 	}
 }
 
-func (u *UsersServer) GetUser(ctx context.Context, req *pb_users_model.UserIDRequest) (*pb_users_model.UserResponse, error) {
+func (u *UsersServer) GetUser(ctx context.Context, req *pb_users_model.UserIDRequest) (*pb_users_model.GetUserResponse, error) {
 	currentUserID := dto.NewGetUserInput(req)
 
 	user, err := u.usecase.ReadUser(ctx, currentUserID)
