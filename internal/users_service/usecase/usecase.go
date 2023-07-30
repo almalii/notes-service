@@ -2,10 +2,12 @@ package usecase
 
 import (
 	"context"
+	"github.com/go-playground/validator/v10"
 	"github.com/sirupsen/logrus"
 	"notes-rew/internal/hash"
 	"notes-rew/internal/users_service/models"
 	"notes-rew/internal/users_service/service"
+	"strings"
 
 	"github.com/google/uuid"
 )
@@ -15,12 +17,13 @@ type UserService interface {
 	GetUserByID(ctx context.Context, id uuid.UUID) (models.UserOutput, error)
 	UpdateUserByID(ctx context.Context, id uuid.UUID, user service.UpdateUser) error
 	DeleteUserByID(ctx context.Context, id uuid.UUID) error
-	CheckerByEmail(ctx context.Context, email string) (bool, error)
+	CheckerByEmail(ctx context.Context, email string) error
 }
 
 type UserUsecase struct {
-	service UserService
-	hasher  hash.Hasher
+	service   UserService
+	hasher    hash.Hasher
+	validator *validator.Validate
 }
 
 func (u *UserUsecase) ReadUser(ctx context.Context, id uuid.UUID) (models.UserOutput, error) {
@@ -28,6 +31,16 @@ func (u *UserUsecase) ReadUser(ctx context.Context, id uuid.UUID) (models.UserOu
 }
 
 func (u *UserUsecase) UpdateUser(ctx context.Context, req UpdateUserInput) error {
+	if err := u.validator.Struct(req); err != nil {
+		logrus.Error(err.(validator.ValidationErrors))
+		return err
+	}
+
+	err := u.service.CheckerByEmail(ctx, strings.ToLower(*req.Email))
+	if err != nil {
+		return err
+	}
+
 	hashedPassword, err := u.hasher.HasherPassword(*req.Password)
 	if err != nil {
 		logrus.Errorf("hash password error: %s", err)
@@ -37,7 +50,7 @@ func (u *UserUsecase) UpdateUser(ctx context.Context, req UpdateUserInput) error
 
 	err = u.service.UpdateUserByID(ctx, req.InitiatorID, userUpdate)
 	if err != nil {
-		logrus.Errorf("update users_service error: %s", err)
+		logrus.Errorf("update users error: %s", err)
 		return err
 	}
 
@@ -48,13 +61,10 @@ func (u *UserUsecase) DeleteUser(ctx context.Context, id uuid.UUID) error {
 	return u.service.DeleteUserByID(ctx, id)
 }
 
-func (u *UserUsecase) CheckUserByEmail(ctx context.Context, email string) (bool, error) {
-	return u.service.CheckerByEmail(ctx, email)
-}
-
-func NewUserUsecase(service UserService, hasher hash.Hasher) *UserUsecase {
+func NewUserUsecase(service UserService, hasher hash.Hasher, validator *validator.Validate) *UserUsecase {
 	return &UserUsecase{
-		service: service,
-		hasher:  hasher,
+		service:   service,
+		hasher:    hasher,
+		validator: validator,
 	}
 }

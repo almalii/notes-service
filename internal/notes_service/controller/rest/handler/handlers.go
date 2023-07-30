@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"net/http"
@@ -17,7 +16,7 @@ import (
 
 type NoteUsecase interface {
 	CreateNote(ctx context.Context, req usecase.CreateNoteInput) (uuid.UUID, error)
-	ReadNote(ctx context.Context, id uuid.UUID) (models.NoteOutput, error)
+	ReadNote(ctx context.Context, noteID, currentUserID uuid.UUID) (models.NoteOutput, error)
 	ReadAllNotes(ctx context.Context, currentUserID uuid.UUID) ([]models.NoteOutput, error)
 	UpdateNote(ctx context.Context, id uuid.UUID, req usecase.UpdateNoteInput) error
 	DeleteNote(ctx context.Context, id uuid.UUID) error
@@ -25,7 +24,6 @@ type NoteUsecase interface {
 
 type NoteController struct {
 	usecase      NoteUsecase
-	validator    *validator.Validate
 	tokenManager token_manager.TokenManager
 }
 
@@ -57,12 +55,6 @@ func (c *NoteController) CreateNoteHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	defer r.Body.Close()
-
-	if err = c.validator.Struct(req); err != nil {
-		logrus.Error(err.(validator.ValidationErrors))
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
 
 	domain := req.ToDomain(currentUserID)
 
@@ -104,14 +96,9 @@ func (c *NoteController) GetNoteHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	note, err := c.usecase.ReadNote(ctx, parsedUUID)
+	note, err := c.usecase.ReadNote(ctx, parsedUUID, currentUserID)
 	if err != nil {
 		http.Error(w, "error reading id", http.StatusNotFound)
-		return
-	}
-
-	if note.Author != currentUserID {
-		http.Error(w, "not authorized to read this notes_service", http.StatusUnauthorized)
 		return
 	}
 
@@ -165,14 +152,9 @@ func (c *NoteController) UpdateNoteHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	note, err := c.usecase.ReadNote(ctx, parsedUUID)
+	_, err = c.usecase.ReadNote(ctx, parsedUUID, currentUserID)
 	if err != nil {
 		http.Error(w, "id is not found", http.StatusNotFound)
-		return
-	}
-
-	if note.Author != currentUserID {
-		http.Error(w, "not authorized to update this notes_service", http.StatusUnauthorized)
 		return
 	}
 
@@ -184,12 +166,6 @@ func (c *NoteController) UpdateNoteHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	defer r.Body.Close()
-
-	if err := c.validator.Struct(req); err != nil {
-		logrus.Error(err.(validator.ValidationErrors))
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
 
 	domain := req.ToDomain()
 
@@ -224,14 +200,9 @@ func (c *NoteController) DeleteNoteHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	note, err := c.usecase.ReadNote(ctx, parsedUUID)
+	_, err = c.usecase.ReadNote(ctx, parsedUUID, currentUserID)
 	if err != nil {
 		http.Error(w, "id is not found", http.StatusNotFound)
-		return
-	}
-
-	if note.Author != currentUserID {
-		http.Error(w, "not authorized to delete this notes_service", http.StatusUnauthorized)
 		return
 	}
 
@@ -244,10 +215,9 @@ func (c *NoteController) DeleteNoteHandler(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func NewNoteController(usecase NoteUsecase, validator *validator.Validate, tokenManager token_manager.TokenManager) *NoteController {
+func NewNoteController(usecase NoteUsecase, tokenManager token_manager.TokenManager) *NoteController {
 	return &NoteController{
 		usecase:      usecase,
-		validator:    validator,
 		tokenManager: tokenManager,
 	}
 }

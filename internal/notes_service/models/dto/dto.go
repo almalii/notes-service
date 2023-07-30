@@ -3,16 +3,15 @@ package dto
 import (
 	pb_notes_model "github.com/almalii/grpc-contracts/gen/go/notes_service/model/v1"
 	"github.com/google/uuid"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	"notes-rew/internal/notes_service/models"
 	"notes-rew/internal/notes_service/usecase"
 )
 
 func NewCreateNoteInput(currentUser uuid.UUID, req *pb_notes_model.CreateNoteRequest) usecase.CreateNoteInput {
 	return usecase.CreateNoteInput{
-		Title: req.Title,
-		Body:  req.Body,
-		//Tags:   req.Tags, TODO: update contract
+		Title:  req.Title,
+		Body:   req.Body,
+		Tags:   req.Tags,
 		Author: currentUser,
 	}
 }
@@ -32,19 +31,14 @@ func NewGetNoteInput(req *pb_notes_model.NoteIDRequest) uuid.UUID {
 }
 
 func NewGetNoteResponse(resp models.NoteOutput) *pb_notes_model.GetNoteResponse {
-	var tagsList []*pb_notes_model.TagsList
-	for _, tag := range resp.Tags {
-		tagsList = append(tagsList, &pb_notes_model.TagsList{Tags: []string{tag}})
-	}
-
 	return &pb_notes_model.GetNoteResponse{
 		Id:        resp.ID.String(),
 		Title:     resp.Title,
 		Body:      resp.Body,
-		Tags:      tagsList, //TODO: wtf?
+		Tags:      resp.Tags,
 		Author:    resp.Author.String(),
-		CreatedAt: timestamppb.New(resp.CreatedAt),
-		UpdatedAt: timestamppb.New(resp.UpdatedAt),
+		CreatedAt: resp.CreatedAt.String(),
+		UpdatedAt: resp.UpdatedAt.String(),
 	}
 }
 
@@ -68,25 +62,19 @@ func NewGetNotesResponse(resp []models.NoteOutput) *pb_notes_model.NoteResponseL
 }
 
 func NewUpdateNoteInput(req *pb_notes_model.UpdateNoteRequest) usecase.UpdateNoteInput {
-
 	return usecase.UpdateNoteInput{
-		Title: req.Title,
-		Body:  req.Body,
-		//Tags:  req.Tags, //TODO: update contract
+		Title: &req.Title,
+		Body:  &req.Body,
+		Tags:  &req.Tags,
 	}
 }
 
 func NewUpdateNoteResponse(resp usecase.UpdateNoteInput) *pb_notes_model.UpdateNoteResponse {
-	var tagsList []*pb_notes_model.TagsList
-	for _, tag := range *resp.Tags {
-		tagsList = append(tagsList, &pb_notes_model.TagsList{Tags: []string{tag}})
-	}
-
 	return &pb_notes_model.UpdateNoteResponse{
 		Title:     *resp.Title,
 		Body:      *resp.Body,
-		Tags:      tagsList, //TODO: wtf?
-		UpdatedAt: timestamppb.New(resp.UpdatedAt),
+		Tags:      *resp.Tags,
+		UpdatedAt: resp.UpdatedAt.String(),
 	}
 }
 

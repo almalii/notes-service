@@ -24,7 +24,7 @@ func main() {
 
 	var wg sync.WaitGroup
 
-	wg.Add(2)
+	wg.Add(3)
 
 	go func() {
 		defer wg.Done()
@@ -36,7 +36,14 @@ func main() {
 	go func() {
 		defer wg.Done()
 		if err := newApp.Start(); err != nil {
-			logrus.Fatalf("Не удалось запустить приложение: %+v", err)
+			logrus.Fatalf("Не удалось запустить HTTP сервер: %+v", err)
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		if err := newAppGRPC.StartGateway(); err != nil {
+			logrus.Fatalf("Не удалось запустить GRPC-Gateway сервер: %+v", err)
 		}
 	}()
 

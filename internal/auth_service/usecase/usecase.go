@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"errors"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -17,6 +16,7 @@ import (
 type AuthService interface {
 	CreateUserServ(ctx context.Context, user service.CreateUser) error
 	AuthByEmail(ctx context.Context, req service.SignInInput) (models.AuthOutput, error)
+	CheckUserByEmail(ctx context.Context, email string) error
 }
 
 const (
@@ -36,17 +36,9 @@ func (u *AuthUsecase) CreateUser(ctx context.Context, req UserInput) (uuid.UUID,
 		return uuid.Nil, err
 	}
 
-	user, err := u.service.AuthByEmail(ctx, service.SignInInput{
-		Email: strings.ToLower(req.Email),
-	})
-
+	err := u.service.CheckUserByEmail(ctx, strings.ToLower(req.Email))
 	if err != nil {
-		logrus.Errorf("users_service not found: %s", err)
 		return uuid.Nil, err
-	}
-
-	if user.Email == req.Email {
-		return uuid.Nil, errors.New("email already exists")
 	}
 
 	hashedPassword, err := u.hasher.HasherPassword(req.Password)
@@ -54,11 +46,11 @@ func (u *AuthUsecase) CreateUser(ctx context.Context, req UserInput) (uuid.UUID,
 		logrus.Errorf("hash password error: %s", err)
 	}
 
-	newUser := NewUserOutput(req.Username, req.Email, hashedPassword)
+	newUser := NewUserOutput(req.Username, req.Email, hashedPassword) // возвращает новый id
 
 	err = u.service.CreateUserServ(ctx, newUser)
 	if err != nil {
-		logrus.Errorf("save users_service error: %s", err)
+		logrus.Errorf("save users error: %s", err)
 		return uuid.Nil, err
 	}
 
@@ -73,7 +65,7 @@ func (u *AuthUsecase) AuthenticateUser(ctx context.Context, req AuthInput) (*mod
 
 	user, err := u.service.AuthByEmail(ctx, service.SignInInput(req))
 	if err != nil {
-		logrus.Errorf("users_service not found: %s", err)
+		logrus.Errorf("user not found: %s", err)
 		return nil, err
 	}
 

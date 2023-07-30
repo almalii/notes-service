@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -119,7 +120,7 @@ func (s *PSQLUserStorage) GetUserForAuth(ctx context.Context, email string) (mod
 	return models.AuthOutput(*user), nil
 }
 
-func (s *PSQLUserStorage) CheckerByEmail(ctx context.Context, email string) (bool, error) {
+func (s *PSQLUserStorage) CheckUserByEmail(ctx context.Context, email string) error {
 	var count int
 
 	sql, args, err := squirrel.Select("count(*)").
@@ -129,46 +130,21 @@ func (s *PSQLUserStorage) CheckerByEmail(ctx context.Context, email string) (boo
 
 	if err != nil {
 		logrus.Errorf("error while building squirrel query: %v", err)
-		return false, err
+		return err
 	}
 
 	err = s.db.QueryRow(ctx, sql, args...).Scan(&count)
 	if err != nil {
 		logrus.Errorf("error while getting count by email: %v", err)
-		return false, err
+		return err
 	}
 
 	if count > 0 {
-		return true, nil
+		// Вернуть стандартную ошибку с сообщением об ошибке.
+		return errors.New("user already exists")
 	}
 
-	return false, nil
-}
-
-func (s *PSQLUserStorage) CheckUserByEmail(ctx context.Context, email string) (bool, error) {
-	var count int
-
-	sql, args, err := squirrel.Select("count(*)").
-		From("users").
-		Where(squirrel.Eq{"email": email}).
-		PlaceholderFormat(squirrel.Dollar).ToSql()
-
-	if err != nil {
-		logrus.Errorf("error while building squirrel query: %v", err)
-		return false, err
-	}
-
-	err = s.db.QueryRow(ctx, sql, args...).Scan(&count)
-	if err != nil {
-		logrus.Errorf("error while getting count by email: %v", err)
-		return false, err
-	}
-
-	if count > 0 {
-		return true, nil
-	}
-
-	return false, nil
+	return nil
 }
 
 func NewPSQLUserStorage(db *pgx.Conn) *PSQLUserStorage {

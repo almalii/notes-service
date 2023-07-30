@@ -2,7 +2,6 @@ package v1
 
 import (
 	"context"
-	"fmt"
 	pb_notes_model "github.com/almalii/grpc-contracts/gen/go/notes_service/model/v1"
 	pb_notes_service "github.com/almalii/grpc-contracts/gen/go/notes_service/service/v1"
 	"github.com/go-playground/validator/v10"
@@ -16,7 +15,7 @@ import (
 
 type NoteUsecase interface {
 	CreateNote(ctx context.Context, req usecase.CreateNoteInput) (uuid.UUID, error)
-	ReadNote(ctx context.Context, id uuid.UUID) (models.NoteOutput, error)
+	ReadNote(ctx context.Context, noteID, currentUserID uuid.UUID) (models.NoteOutput, error)
 	ReadAllNotes(ctx context.Context, currentUserID uuid.UUID) ([]models.NoteOutput, error)
 	UpdateNote(ctx context.Context, id uuid.UUID, req usecase.UpdateNoteInput) error
 	DeleteNote(ctx context.Context, id uuid.UUID) error
@@ -28,27 +27,13 @@ type NotesServer struct {
 	pb_notes_service.UnimplementedNotesServiceServer
 }
 
-func NewNotesServer(
-	usecase NoteUsecase,
-	validator *validator.Validate,
-	unimplementedNotesServiceServer pb_notes_service.UnimplementedNotesServiceServer,
-) *NotesServer {
-	return &NotesServer{
-		usecase:                         usecase,
-		validator:                       validator,
-		UnimplementedNotesServiceServer: unimplementedNotesServiceServer,
-	}
-}
-
-func (n *NotesServer) CreateNote(ctx context.Context, req *pb_notes_model.CreateNoteRequest) (*pb_notes_model.NoteIDResponse, error) {
-	currentUserID := uuid.UUID{} //TODO: заглушка
+func (n *NotesServer) CreateNote(
+	ctx context.Context,
+	req *pb_notes_model.CreateNoteRequest,
+) (*pb_notes_model.NoteIDResponse, error) {
+	currentUserID := ctx.Value("userID").(uuid.UUID)
 
 	input := dto.NewCreateNoteInput(currentUserID, req)
-
-	if err := n.validator.Struct(input); err != nil {
-		logrus.Error(err.(validator.ValidationErrors))
-		return nil, err
-	}
 
 	noteID, err := n.usecase.CreateNote(ctx, input)
 	if err != nil {
@@ -61,28 +46,30 @@ func (n *NotesServer) CreateNote(ctx context.Context, req *pb_notes_model.Create
 	return resp, nil
 }
 
-func (n *NotesServer) GetNote(ctx context.Context, req *pb_notes_model.NoteIDRequest) (*pb_notes_model.GetNoteResponse, error) {
+func (n *NotesServer) GetNote(
+	ctx context.Context,
+	req *pb_notes_model.NoteIDRequest,
+) (*pb_notes_model.GetNoteResponse, error) {
 	noteID := dto.NewGetNoteInput(req)
-	//currentUserID := uuid.UUID{} //TODO: заглушка
 
-	note, err := n.usecase.ReadNote(ctx, noteID)
+	currentUserID := ctx.Value("userID").(uuid.UUID)
+
+	note, err := n.usecase.ReadNote(ctx, noteID, currentUserID)
 	if err != nil {
 		logrus.Error("error getting note: ", err)
 		return nil, err
 	}
-
-	//if note.Author != currentUserID {
-	//	logrus.Error("user is not author of this note")
-	//	return nil, fmt.Errorf("user is not author of this note")
-	//}
 
 	resp := dto.NewGetNoteResponse(note)
 
 	return resp, nil
 }
 
-func (n *NotesServer) GetNotes(ctx context.Context, req *pb_notes_model.AuthorIDRequest) (*pb_notes_model.NoteResponseList, error) {
-	currentUserID := dto.NewGetNotesInput(req)
+func (n *NotesServer) GetNotes(
+	ctx context.Context,
+	req *pb_notes_model.AuthorIDRequest,
+) (*pb_notes_model.NoteResponseList, error) {
+	currentUserID := ctx.Value("userID").(uuid.UUID)
 
 	notes, err := n.usecase.ReadAllNotes(ctx, currentUserID)
 	if err != nil {
@@ -95,27 +82,19 @@ func (n *NotesServer) GetNotes(ctx context.Context, req *pb_notes_model.AuthorID
 	return resp, nil
 }
 
-func (n *NotesServer) UpdateNote(ctx context.Context, req *pb_notes_model.UpdateNoteRequest) (*pb_notes_model.UpdateNoteResponse, error) {
+func (n *NotesServer) UpdateNote(
+	ctx context.Context,
+	req *pb_notes_model.UpdateNoteRequest,
+) (*pb_notes_model.UpdateNoteResponse, error) {
 	input := dto.NewUpdateNoteInput(req)
-
-	if err := n.validator.Struct(input); err != nil {
-		logrus.Error(err.(validator.ValidationErrors))
-		return nil, err
-	}
-
 	noteID := dto.NewCurrentNoteID(req)
 
-	currentUserID := uuid.UUID{} //TODO: заглушка
+	currentUserID := ctx.Value("userID").(uuid.UUID)
 
-	note, err := n.usecase.ReadNote(ctx, noteID)
+	_, err := n.usecase.ReadNote(ctx, noteID, currentUserID)
 	if err != nil {
 		logrus.Error("error getting note: ", err)
 		return nil, err
-	}
-
-	if note.Author != currentUserID {
-		logrus.Error("user is not author of this note")
-		return nil, fmt.Errorf("user is not author of this note")
 	}
 
 	err = n.usecase.UpdateNote(ctx, noteID, input)
@@ -129,19 +108,17 @@ func (n *NotesServer) UpdateNote(ctx context.Context, req *pb_notes_model.Update
 	return resp, nil
 }
 
-func (n *NotesServer) DeleteNote(ctx context.Context, req *pb_notes_model.NoteIDRequest) (*emptypb.Empty, error) {
+func (n *NotesServer) DeleteNote(
+	ctx context.Context,
+	req *pb_notes_model.NoteIDRequest,
+) (*emptypb.Empty, error) {
 	noteID := dto.NewDeleteNoteInput(req)
-	currentUserID := uuid.UUID{} //TODO: заглушка
+	currentUserID := ctx.Value("userID").(uuid.UUID)
 
-	note, err := n.usecase.ReadNote(ctx, noteID)
+	_, err := n.usecase.ReadNote(ctx, noteID, currentUserID)
 	if err != nil {
 		logrus.Error("error getting note: ", err)
 		return nil, err
-	}
-
-	if note.Author != currentUserID {
-		logrus.Error("user is not author of this note")
-		return nil, fmt.Errorf("user is not author of this note")
 	}
 
 	err = n.usecase.DeleteNote(ctx, noteID)
@@ -151,4 +128,14 @@ func (n *NotesServer) DeleteNote(ctx context.Context, req *pb_notes_model.NoteID
 	}
 
 	return &emptypb.Empty{}, nil
+}
+
+func NewNotesServer(
+	usecase NoteUsecase,
+	unimplementedNotesServiceServer pb_notes_service.UnimplementedNotesServiceServer,
+) *NotesServer {
+	return &NotesServer{
+		usecase:                         usecase,
+		UnimplementedNotesServiceServer: unimplementedNotesServiceServer,
+	}
 }

@@ -11,7 +11,7 @@ type UserStorage interface {
 	GetUserByID(ctx context.Context, id uuid.UUID) (models.UserOutput, error)
 	UpdateUserByID(ctx context.Context, id uuid.UUID, user UpdateUser) error
 	DeleteUserByID(ctx context.Context, id uuid.UUID) error
-	CheckUserByEmail(ctx context.Context, email string) (bool, error)
+	CheckUserByEmail(ctx context.Context, email string) error
 }
 
 type UserService struct {
@@ -34,7 +34,7 @@ func (s *UserService) DeleteUserByID(ctx context.Context, id uuid.UUID) error {
 	return s.storage.DeleteUserByID(ctx, id)
 }
 
-func (s *UserService) CheckerByEmail(ctx context.Context, email string) (bool, error) {
+func (s *UserService) CheckerByEmail(ctx context.Context, email string) error {
 	return s.storage.CheckUserByEmail(ctx, email)
 }
 

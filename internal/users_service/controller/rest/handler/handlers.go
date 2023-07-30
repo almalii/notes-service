@@ -4,34 +4,27 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 	"net/http"
 	"notes-rew/internal/middlewares"
 	"notes-rew/internal/token_manager"
 	"notes-rew/internal/users_service/controller"
 	"notes-rew/internal/users_service/models"
 	"notes-rew/internal/users_service/usecase"
-	"strings"
 )
 
 type UserUsecase interface {
 	ReadUser(ctx context.Context, id uuid.UUID) (models.UserOutput, error)
 	UpdateUser(ctx context.Context, req usecase.UpdateUserInput) error
 	DeleteUser(ctx context.Context, id uuid.UUID) error
-	CheckUserByEmail(ctx context.Context, email string) (bool, error)
 }
 
 type UserController struct {
 	usecase      UserUsecase
-	validator    *validator.Validate
-	ctx          context.Context
 	tokenManager token_manager.TokenManager
 }
 
 func (c *UserController) Register(r chi.Router) {
-
 	r.Route("/users", func(r chi.Router) {
 		r.Use(middlewares.UserIdentity(c.tokenManager))
 		r.Get("/", c.GetUserHandler)
@@ -46,10 +39,10 @@ func (c *UserController) GetUserHandler(w http.ResponseWriter, r *http.Request) 
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-
+	ctx := r.Context()
 	currentUserID := r.Context().Value("userID").(uuid.UUID)
 
-	user, err := c.usecase.ReadUser(c.ctx, currentUserID)
+	user, err := c.usecase.ReadUser(ctx, currentUserID)
 	if err != nil {
 		http.Error(w, "error reading id", http.StatusNotFound)
 		return
@@ -71,9 +64,10 @@ func (c *UserController) UpdateUserHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	ctx := r.Context()
 	currentUserID := r.Context().Value("userID").(uuid.UUID)
 
-	_, err := c.usecase.ReadUser(c.ctx, currentUserID)
+	_, err := c.usecase.ReadUser(ctx, currentUserID)
 	if err != nil {
 		http.Error(w, "id is not found", http.StatusNotFound)
 		return
@@ -88,26 +82,9 @@ func (c *UserController) UpdateUserHandler(w http.ResponseWriter, r *http.Reques
 	}
 	defer r.Body.Close()
 
-	existingUser, err := c.usecase.CheckUserByEmail(r.Context(), strings.ToLower(*req.Email))
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if existingUser {
-		http.Error(w, "email already exists", http.StatusBadRequest)
-		return
-	}
-
-	if err := c.validator.Struct(req); err != nil {
-		logrus.Error(err.(validator.ValidationErrors))
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
 	domain := req.ToDomain(currentUserID)
 
-	err = c.usecase.UpdateUser(c.ctx, domain)
+	err = c.usecase.UpdateUser(ctx, domain)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -115,7 +92,6 @@ func (c *UserController) UpdateUserHandler(w http.ResponseWriter, r *http.Reques
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
-
 	err = json.NewEncoder(w).Encode(req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -129,15 +105,16 @@ func (c *UserController) DeleteUserHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	ctx := r.Context()
 	currentUserID := r.Context().Value("userID").(uuid.UUID)
 
-	_, err := c.usecase.ReadUser(c.ctx, currentUserID)
+	_, err := c.usecase.ReadUser(ctx, currentUserID)
 	if err != nil {
 		http.Error(w, "id is not found", http.StatusNotFound)
 		return
 	}
 
-	err = c.usecase.DeleteUser(c.ctx, currentUserID)
+	err = c.usecase.DeleteUser(ctx, currentUserID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -146,11 +123,9 @@ func (c *UserController) DeleteUserHandler(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func NewUserController(usecase UserUsecase, validate *validator.Validate, tokenManager token_manager.TokenManager, ctx context.Context) *UserController {
+func NewUserController(usecase UserUsecase, tokenManager token_manager.TokenManager) *UserController {
 	return &UserController{
 		usecase:      usecase,
-		validator:    validate,
 		tokenManager: tokenManager,
-		ctx:          ctx,
 	}
 }

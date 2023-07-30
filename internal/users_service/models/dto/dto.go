@@ -17,11 +17,13 @@ func NewGetUserInput(req *pb_users_model.UserIDRequest) uuid.UUID {
 	return userID
 }
 
-func NewGetUserResponse(resp models.UserOutput) *pb_users_model.UserResponse {
-	return &pb_users_model.UserResponse{
-		Id:    resp.ID.String(),
-		Name:  resp.Username,
-		Email: resp.Email,
+func NewGetUserResponse(resp models.UserOutput) *pb_users_model.GetUserResponse {
+	return &pb_users_model.GetUserResponse{
+		Id:        resp.ID.String(),
+		Name:      resp.Username,
+		Email:     resp.Email,
+		CreatedAt: resp.CreatedAt.String(),
+		UpdatedAt: resp.UpdatedAt.String(),
 	}
 }
 

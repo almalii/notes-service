@@ -61,14 +61,14 @@ func NewApp(ctx context.Context, cfg config.Config) *App {
 
 	noteStorage := notesStorage.NewNoteStorage(connectDB)
 	noteService := notesService.NewNoteService(noteStorage)
-	noteUsecase := notesUsecase.NewNoteUsecase(noteService)
-	noteController := notesController.NewNoteController(noteUsecase, validation, tokenManager)
+	noteUsecase := notesUsecase.NewNoteUsecase(noteService, validation)
+	noteController := notesController.NewNoteController(noteUsecase, tokenManager)
 	noteController.Register(router)
 
 	userStorage := usersStorage.NewPSQLUserStorage(connectDB)
 	userService := usersService.NewUserService(userStorage)
-	userUsecase := usersUsecase.NewUserUsecase(userService, hasher)
-	userController := usersController.NewUserController(userUsecase, validation, tokenManager, ctx)
+	userUsecase := usersUsecase.NewUserUsecase(userService, hasher, validation)
+	userController := usersController.NewUserController(userUsecase, tokenManager)
 	userController.Register(router)
 
 	authsStorage := authStorage.NewUserStorage(connectDB)

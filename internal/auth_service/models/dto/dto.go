@@ -27,9 +27,3 @@ func NewSignInInput(req *pb_model.SignInRequest) usecase.AuthInput {
 		Password: req.Password,
 	}
 }
-
-func NewSignInResponse(id uuid.UUID) *pb_model.SignInResponse {
-	return &pb_model.SignInResponse{
-		Id: id.String(),
-	}
-}

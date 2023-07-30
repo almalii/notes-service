@@ -57,7 +57,7 @@ func (s *AuthServer) SignIn(ctx context.Context, req *pb_model.SignInRequest) (*
 	}
 
 	resp := pb_model.SignInResponse{
-		Id: authData.Token,
+		Token: authData.Token,
 	}
 
 	return &resp, nil

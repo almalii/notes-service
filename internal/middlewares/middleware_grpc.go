@@ -13,10 +13,6 @@ import (
 	"strings"
 )
 
-type validatable interface {
-	Validate() error
-}
-
 func UnaryTokenInterceptor(tm token_manager.TokenManager) grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
@@ -61,23 +57,40 @@ func UnaryTokenInterceptor(tm token_manager.TokenManager) grpc.UnaryServerInterc
 	}
 }
 
-func GrpcInterceptor() grpc.ServerOption {
-	grpcServerOptions := grpc.UnaryInterceptor(func(
-		ctx context.Context,
-		req interface{},
-		info *grpc.UnaryServerInfo,
-		handler grpc.UnaryHandler,
-	) (resp interface{}, err error) {
-		if v, ok := req.(validatable); ok {
-			err := v.Validate()
-			if err != nil {
-				return nil, err
-			}
+func StreamTokenInterceptor(tm token_manager.TokenManager) grpc.StreamServerInterceptor {
+	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+		// Извлекаем токен из метаданных.
+		md, ok := metadata.FromIncomingContext(ss.Context())
+		if !ok {
+			return status.Errorf(codes.Unauthenticated, "missing metadata")
 		}
-		resp, err = handler(ctx, req)
-		return handler(ctx, req)
-	})
-	return grpcServerOptions
+		token, ok := md["authorization"]
+		if !ok || len(token) == 0 {
+			return status.Errorf(codes.Unauthenticated, "missing token")
+		}
+
+		// Проверяем токен.
+		claims, err := tm.ParseToken(token[0])
+		if err != nil {
+			return status.Errorf(codes.Unauthenticated, "invalid token: %v", err)
+		}
+
+		// Вносим информацию о пользователя в контекст запроса.
+		ctx := context.WithValue(ss.Context(), "userID", claims)
+
+		// Выполняем обработку запроса.
+		return handler(srv, &wrappedServerStream{ServerStream: ss, ctx: ctx})
+	}
+}
+
+// wrappedServerStream оборачивает grpc.ServerStream для передачи контекста.
+type wrappedServerStream struct {
+	grpc.ServerStream
+	ctx context.Context
+}
+
+func (w *wrappedServerStream) Context() context.Context {
+	return w.ctx
 }
 
 func HttpInterceptor() runtime.ServeMuxOption {
@@ -86,17 +99,3 @@ func HttpInterceptor() runtime.ServeMuxOption {
 	})
 	return httpServerOptions
 }
-
-//func (m *MicroserviceServer) getUserIdFromToken(ctx context.Context) (string, error) {
-//	md, _ := metadata.FromIncomingContext(ctx)
-//	token := md.Get("Authorization")
-//	if token == nil {
-//		return "", status.Errorf(codes.PermissionDenied, "user isn't authorized")
-//	}
-//
-//	userID, err := m.tokenManager.Parse(token[0])
-//	if err != nil {
-//		return "", err
-//	}
-//	return *userID, nil
-//}

@@ -28,3 +28,8 @@ func NewUpdateNoteInput(title *string, body *string, tags *[]string) (UpdateNote
 		UpdatedAt: time.Now().UTC(),
 	}, nil
 }
+
+type ReadNoteInput struct {
+	NoteID        uuid.UUID
+	CurrentUserID uuid.UUID
+}

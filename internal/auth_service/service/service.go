@@ -8,6 +8,7 @@ import (
 type AuthStorage interface {
 	SaveUserToDB(ctx context.Context, user CreateUser) error
 	GetUserForAuth(ctx context.Context, email string) (models.AuthOutput, error)
+	CheckUserByEmail(ctx context.Context, email string) error
 }
 
 type AuthService struct {
@@ -16,6 +17,10 @@ type AuthService struct {
 
 func (s *AuthService) CreateUserServ(ctx context.Context, user CreateUser) error {
 	return s.storage.SaveUserToDB(ctx, user)
+}
+
+func (s *AuthService) CheckUserByEmail(ctx context.Context, email string) error {
+	return s.storage.CheckUserByEmail(ctx, email)
 }
 
 func (s *AuthService) AuthByEmail(ctx context.Context, req SignInInput) (models.AuthOutput, error) {

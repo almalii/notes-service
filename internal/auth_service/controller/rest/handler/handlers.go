@@ -29,7 +29,6 @@ func (c *AuthController) Register(r chi.Router) {
 	})
 }
 
-// Регистрация пользователя
 func (c *AuthController) SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -63,7 +62,6 @@ func (c *AuthController) SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(resp)
 }
 
-// Авторизация пользователя
 func (c *AuthController) SignInHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -96,7 +94,6 @@ func (c *AuthController) SignInHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// Выход пользователя
 func (c *AuthController) SignOutHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -106,9 +103,7 @@ func (c *AuthController) SignOutHandler(w http.ResponseWriter, r *http.Request) 
 	w.WriteHeader(http.StatusOK)
 }
 
-func NewAuthController(
-	usecase AuthUsecase,
-) *AuthController {
+func NewAuthController(usecase AuthUsecase) *AuthController {
 	return &AuthController{
 		usecase: usecase,
 	}

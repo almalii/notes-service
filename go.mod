@@ -6,9 +6,9 @@ require github.com/google/uuid v1.3.0
 
 require (
 	github.com/Masterminds/squirrel v1.5.4
-	github.com/almalii/grpc-contracts/gen/go/auth_service v0.0.0-20230727100522-bf0abcd44950
-	github.com/almalii/grpc-contracts/gen/go/notes_service v0.0.0-20230727100522-bf0abcd44950
-	github.com/almalii/grpc-contracts/gen/go/users_service v0.0.0-20230727100522-bf0abcd44950
+	github.com/almalii/grpc-contracts/gen/go/auth_service v0.0.0-20230729163507-e4d7e7bdf489
+	github.com/almalii/grpc-contracts/gen/go/notes_service v0.0.0-20230729163507-e4d7e7bdf489
+	github.com/almalii/grpc-contracts/gen/go/users_service v0.0.0-20230729163507-e4d7e7bdf489
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/go-playground/validator/v10 v10.14.1
 	github.com/golang-jwt/jwt/v5 v5.0.0
