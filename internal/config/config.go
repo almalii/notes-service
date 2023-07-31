@@ -13,7 +13,7 @@ type Config struct {
 	DB            DB            `yaml:"data_base"`
 	HTTPServer    HTTPServer    `yaml:"http_server"`
 	GRPCServer    GRPCServer    `yaml:"grpc_server"`
-	GatewayServer GatewayServer `yaml:"gateway_server"`
+	GatewayServer GatewayServer `yaml:"grpc_gateway"`
 	MigrationsDir string        `yaml:"migrations_dir" env:"MIGRATIONS_DIR"`
 	JwtSigning    string        `yaml:"jwt_signing" env:"JWT_SIGNING"`
 	Salt          string        `yaml:"salt" env:"SALT"`

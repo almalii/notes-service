@@ -45,7 +45,7 @@ func (t tokenManager) ParseToken(accessToken string) (string, error) {
 
 	claims, ok := token.Claims.(*jwt.RegisteredClaims)
 	if !ok {
-		return "uuid.Nil", errors.New("invalid token claims")
+		return "", errors.New("invalid token claims")
 	}
 
 	return claims.Subject, nil

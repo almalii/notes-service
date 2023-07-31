@@ -8,19 +8,19 @@ data_base:
   driver: "pgx"
 
 http_server:
-    address: "localhost:8090"
+    address: "localhost:8081"
     read_timeout: "10"
     write_timeout: "10"
     max_header_bytes: "1"
 
 grpc_server:
-    address: "localhost:8091"
+    address: "localhost:8082"
     read_timeout: "10"
     write_timeout: "10"
     max_header_bytes: "1"
 
 grpc_gateway:
-    address: "localhost:8092"
+    address: "localhost:8083"
     read_timeout: "10"
     write_timeout: "10"
     max_header_bytes: "1"
