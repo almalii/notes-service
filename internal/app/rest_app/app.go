@@ -99,7 +99,7 @@ func (a *App) Start() error {
 		}
 	}()
 
-	log.Println("server started on address:", a.cfg.HTTPServer.Address)
+	log.Println("HTTP server started on address:", a.cfg.HTTPServer.Address)
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, os.Interrupt)

@@ -45,7 +45,11 @@ func (c *NoteController) CreateNoteHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	ctx := r.Context()
-	currentUserID := ctx.Value("userID").(uuid.UUID)
+	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
+	if !ok {
+		http.Error(w, "error reading id", http.StatusNotFound)
+		return
+	}
 
 	var req controller.CreateNoteRequest
 
@@ -87,7 +91,11 @@ func (c *NoteController) GetNoteHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	ctx := r.Context()
-	currentUserID := ctx.Value("userID").(uuid.UUID)
+	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
+	if !ok {
+		http.Error(w, "error reading id", http.StatusNotFound)
+		return
+	}
 
 	noteID := chi.URLParam(r, "id")
 	parsedUUID, err := uuid.Parse(noteID)
@@ -119,7 +127,11 @@ func (c *NoteController) GetAllNotesHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	ctx := r.Context()
-	currentUserID := ctx.Value("userID").(uuid.UUID)
+	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
+	if !ok {
+		http.Error(w, "error reading id", http.StatusNotFound)
+		return
+	}
 
 	notes, err := c.usecase.ReadAllNotes(ctx, currentUserID)
 	if err != nil {
@@ -143,7 +155,11 @@ func (c *NoteController) UpdateNoteHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	ctx := r.Context()
-	currentUserID := ctx.Value("userID").(uuid.UUID)
+	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
+	if !ok {
+		http.Error(w, "error reading id", http.StatusNotFound)
+		return
+	}
 
 	noteID := chi.URLParam(r, "id")
 	parsedUUID, err := uuid.Parse(noteID)
@@ -191,7 +207,11 @@ func (c *NoteController) DeleteNoteHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	ctx := r.Context()
-	currentUserID := ctx.Value("userID").(uuid.UUID)
+	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
+	if !ok {
+		http.Error(w, "error reading id", http.StatusNotFound)
+		return
+	}
 
 	noteID := chi.URLParam(r, "id")
 	parsedUUID, err := uuid.Parse(noteID)

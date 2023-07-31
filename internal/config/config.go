@@ -10,12 +10,13 @@ import (
 )
 
 type Config struct {
-	DB            DB         `yaml:"data_base"`
-	HTTPServer    HTTPServer `yaml:"http_server"`
-	GRPCServer    GRPCServer `yaml:"grpc_server"`
-	MigrationsDir string     `yaml:"migrations_dir" env:"MIGRATIONS_DIR"`
-	JwtSigning    string     `yaml:"jwt_signing" env:"JWT_SIGNING"`
-	Salt          string     `yaml:"salt" env:"SALT"`
+	DB            DB            `yaml:"data_base"`
+	HTTPServer    HTTPServer    `yaml:"http_server"`
+	GRPCServer    GRPCServer    `yaml:"grpc_server"`
+	GatewayServer GatewayServer `yaml:"gateway_server"`
+	MigrationsDir string        `yaml:"migrations_dir" env:"MIGRATIONS_DIR"`
+	JwtSigning    string        `yaml:"jwt_signing" env:"JWT_SIGNING"`
+	Salt          string        `yaml:"salt" env:"SALT"`
 }
 
 type DB struct {
@@ -33,8 +34,11 @@ type HTTPServer struct {
 }
 
 type GRPCServer struct {
-	Address        string `yaml:"address" env:"GRPC_SERVER_ADDRESS"`
-	GateWayAddress string `yaml:"gateway_address" env:"GRPC_GATEWAY_ADDRESS"`
+	Address string `yaml:"address" env:"GRPC_SERVER_ADDRESS"`
+}
+
+type GatewayServer struct {
+	Address string `yaml:"address" env:"GATEWAY_SERVER_ADDRESS"`
 }
 
 const (

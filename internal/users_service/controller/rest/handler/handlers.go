@@ -40,7 +40,11 @@ func (c *UserController) GetUserHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	ctx := r.Context()
-	currentUserID := r.Context().Value("userID").(uuid.UUID)
+	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
+	if !ok {
+		http.Error(w, "error reading id", http.StatusNotFound)
+		return
+	}
 
 	user, err := c.usecase.ReadUser(ctx, currentUserID)
 	if err != nil {
@@ -65,7 +69,11 @@ func (c *UserController) UpdateUserHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	ctx := r.Context()
-	currentUserID := r.Context().Value("userID").(uuid.UUID)
+	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
+	if !ok {
+		http.Error(w, "error reading id", http.StatusNotFound)
+		return
+	}
 
 	_, err := c.usecase.ReadUser(ctx, currentUserID)
 	if err != nil {
@@ -106,7 +114,11 @@ func (c *UserController) DeleteUserHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	ctx := r.Context()
-	currentUserID := r.Context().Value("userID").(uuid.UUID)
+	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
+	if !ok {
+		http.Error(w, "error reading id", http.StatusNotFound)
+		return
+	}
 
 	_, err := c.usecase.ReadUser(ctx, currentUserID)
 	if err != nil {

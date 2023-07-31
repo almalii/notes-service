@@ -2,6 +2,7 @@ package v1
 
 import (
 	"context"
+	"errors"
 	pb_notes_model "github.com/almalii/grpc-contracts/gen/go/notes_service/model/v1"
 	pb_notes_service "github.com/almalii/grpc-contracts/gen/go/notes_service/service/v1"
 	"github.com/go-playground/validator/v10"
@@ -31,7 +32,12 @@ func (n *NotesServer) CreateNote(
 	ctx context.Context,
 	req *pb_notes_model.CreateNoteRequest,
 ) (*pb_notes_model.NoteIDResponse, error) {
-	currentUserID := ctx.Value("userID").(uuid.UUID)
+
+	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
+	if !ok {
+		logrus.Error("error getting user id from context")
+		return nil, errors.New("error getting user id from context")
+	}
 
 	input := dto.NewCreateNoteInput(currentUserID, req)
 
@@ -50,9 +56,14 @@ func (n *NotesServer) GetNote(
 	ctx context.Context,
 	req *pb_notes_model.NoteIDRequest,
 ) (*pb_notes_model.GetNoteResponse, error) {
+
 	noteID := dto.NewGetNoteInput(req)
 
-	currentUserID := ctx.Value("userID").(uuid.UUID)
+	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
+	if !ok {
+		logrus.Error("error getting user id from context")
+		return nil, errors.New("error getting user id from context")
+	}
 
 	note, err := n.usecase.ReadNote(ctx, noteID, currentUserID)
 	if err != nil {
@@ -69,7 +80,12 @@ func (n *NotesServer) GetNotes(
 	ctx context.Context,
 	req *pb_notes_model.AuthorIDRequest,
 ) (*pb_notes_model.NoteResponseList, error) {
-	currentUserID := ctx.Value("userID").(uuid.UUID)
+
+	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
+	if !ok {
+		logrus.Error("error getting user id from context")
+		return nil, errors.New("error getting user id from context")
+	}
 
 	notes, err := n.usecase.ReadAllNotes(ctx, currentUserID)
 	if err != nil {
@@ -86,10 +102,15 @@ func (n *NotesServer) UpdateNote(
 	ctx context.Context,
 	req *pb_notes_model.UpdateNoteRequest,
 ) (*pb_notes_model.UpdateNoteResponse, error) {
+
 	input := dto.NewUpdateNoteInput(req)
 	noteID := dto.NewCurrentNoteID(req)
 
-	currentUserID := ctx.Value("userID").(uuid.UUID)
+	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
+	if !ok {
+		logrus.Error("error getting user id from context")
+		return nil, errors.New("error getting user id from context")
+	}
 
 	_, err := n.usecase.ReadNote(ctx, noteID, currentUserID)
 	if err != nil {
@@ -112,8 +133,14 @@ func (n *NotesServer) DeleteNote(
 	ctx context.Context,
 	req *pb_notes_model.NoteIDRequest,
 ) (*emptypb.Empty, error) {
+
 	noteID := dto.NewDeleteNoteInput(req)
-	currentUserID := ctx.Value("userID").(uuid.UUID)
+
+	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
+	if !ok {
+		logrus.Error("error getting user id from context")
+		return nil, errors.New("error getting user id from context")
+	}
 
 	_, err := n.usecase.ReadNote(ctx, noteID, currentUserID)
 	if err != nil {

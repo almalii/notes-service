@@ -9,7 +9,6 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 	"log"
 	"net"
@@ -33,6 +32,8 @@ import (
 	usersStorage "notes-rew/internal/users_service/storage/postgres"
 	usersUsecase "notes-rew/internal/users_service/usecase"
 	"notes-rew/internal/validators"
+	"os"
+	"os/signal"
 	"time"
 )
 
@@ -103,37 +104,24 @@ func NewAppGRPC(ctx context.Context, cfg config.Config) *AppGRPC {
 
 func (ap *AppGRPC) StartGRPC() error {
 	listener, err := net.Listen("tcp", ap.cfg.GRPCServer.Address)
-	listenerAuth, err := net.Listen("tcp", "localhost:8092")
 	if err != nil {
 		logrus.Fatalf("Failed to listen: %+v", err)
 	}
 
-	grpcAuthServer := grpc.NewServer()
-
 	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(
-		middlewares.UnaryTokenInterceptor(ap.tokenManager),
-	), grpc.ChainStreamInterceptor(
-		middlewares.StreamTokenInterceptor(ap.tokenManager)),
-	)
+		middlewares.UnaryTokenInterceptor(ap.tokenManager)))
 
-	pb_auth_service.RegisterAuthServiceServer(grpcAuthServer, ap.protoService.auth)
+	pb_auth_service.RegisterAuthServiceServer(grpcServer, ap.protoService.auth)
 	pb_users_service.RegisterUsersServiceServer(grpcServer, ap.protoService.users)
 	pb_notes_service.RegisterNotesServiceServer(grpcServer, ap.protoService.notes)
 
-	reflection.Register(grpcAuthServer)
 	reflection.Register(grpcServer)
 
-	go func() {
-		if err := grpcAuthServer.Serve(listenerAuth); err != nil {
-			logrus.Fatalf("Failed to start gRPC server: %+v", err)
-		}
-	}()
+	log.Println("gRPC server started on port:", ap.cfg.GRPCServer.Address)
 
-	if err := grpcServer.Serve(listener); err != nil {
+	if err = grpcServer.Serve(listener); err != nil {
 		logrus.Fatalf("Failed to start gRPC server: %+v", err)
 	}
-
-	log.Println("gRPC server started on port", ap.cfg.GRPCServer.Address)
 
 	return nil
 }
@@ -141,47 +129,39 @@ func (ap *AppGRPC) StartGRPC() error {
 func (ap *AppGRPC) StartGateway() error {
 	mux := runtime.NewServeMux()
 
-	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
-
-	if err := pb_auth_service.RegisterAuthServiceHandlerFromEndpoint(
-		ap.ctx,
-		mux,
-		"localhost:8095",
-		opts,
-	); err != nil {
-		logrus.Fatalf("Failed to register gRPC-Gateway auth service v1: %+v", err)
+	err := pb_auth_service.RegisterAuthServiceHandlerServer(ap.ctx, mux, ap.protoService.auth)
+	if err != nil {
+		return err
 	}
 
-	if err := pb_users_service.RegisterUsersServiceHandlerFromEndpoint(
-		ap.ctx,
-		mux,
-		"localhost:8094",
-		opts,
-	); err != nil {
-		logrus.Fatalf("Failed to register gRPC-Gateway users service v1: %+v", err)
+	err = pb_users_service.RegisterUsersServiceHandlerServer(ap.ctx, mux, ap.protoService.users)
+	if err != nil {
+		return err
 	}
 
-	if err := pb_notes_service.RegisterNotesServiceHandlerFromEndpoint(
-		ap.ctx,
-		mux,
-		"localhost:8093",
-		opts,
-	); err != nil {
-		logrus.Fatalf("Failed to register gRPC-Gateway notes service v1: %+v", err)
+	err = pb_notes_service.RegisterNotesServiceHandlerServer(ap.ctx, mux, ap.protoService.notes)
+	if err != nil {
+		return err
 	}
 
 	httpServer := &http.Server{
-		Addr:         ":8095",
-		Handler:      mux,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
+		Addr:    ap.cfg.GatewayServer.Address,
+		Handler: middlewares.HttpInterceptor(ap.tokenManager, mux),
 	}
 
-	log.Println("gRPC-Gateway server started on port", ap.cfg.GRPCServer.GateWayAddress)
+	log.Println("gRPC-Gateway server started on port:", ap.cfg.GatewayServer.Address)
 
-	if err := httpServer.ListenAndServe(); err != nil {
+	if err = httpServer.ListenAndServe(); err != nil {
 		logrus.Fatalf("Failed to start gRPC-Gateway server: %+v", err)
 	}
 
-	return nil
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, os.Interrupt)
+
+	<-quit
+
+	shutdownCtx, shutdown := context.WithTimeout(ap.ctx, 5*time.Second)
+	defer shutdown()
+
+	return httpServer.Shutdown(shutdownCtx)
 }

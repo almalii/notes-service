@@ -2,6 +2,7 @@ package v1
 
 import (
 	"context"
+	"errors"
 	pb_users_model "github.com/almalii/grpc-contracts/gen/go/users_service/model/v1"
 	pb_users_service "github.com/almalii/grpc-contracts/gen/go/users_service/service/v1"
 	"github.com/google/uuid"
@@ -27,7 +28,12 @@ func (u *UsersServer) GetUser(
 	ctx context.Context,
 	req *pb_users_model.UserIDRequest,
 ) (*pb_users_model.GetUserResponse, error) {
-	currentUserID := ctx.Value("userID").(uuid.UUID)
+
+	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
+	if !ok {
+		logrus.Error("error getting user id from context")
+		return nil, errors.New("error getting user id from context")
+	}
 
 	user, err := u.usecase.ReadUser(ctx, currentUserID)
 	if err != nil {
@@ -44,7 +50,12 @@ func (u *UsersServer) UpdateUser(
 	ctx context.Context,
 	req *pb_users_model.UpdateUserRequest,
 ) (*pb_users_model.UpdateUserResponse, error) {
-	currentUserID := ctx.Value("userID").(uuid.UUID)
+
+	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
+	if !ok {
+		logrus.Error("error getting user id from context")
+		return nil, errors.New("error getting user id from context")
+	}
 
 	_, err := u.usecase.ReadUser(ctx, currentUserID)
 	if err != nil {
@@ -69,7 +80,12 @@ func (u *UsersServer) DeleteUser(
 	ctx context.Context,
 	req *pb_users_model.UserIDRequest,
 ) (*emptypb.Empty, error) {
-	currentUserID := ctx.Value("userID").(uuid.UUID)
+
+	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
+	if !ok {
+		logrus.Error("error getting user id from context")
+		return nil, errors.New("error getting user id from context")
+	}
 
 	_, err := u.usecase.ReadUser(ctx, currentUserID)
 	if err != nil {
