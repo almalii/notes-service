@@ -18,7 +18,7 @@ import (
 // @host localhost:8081
 // @BasePath /
 
-// @securityDefinitions.apiKey ApiKeyAuth
+// @securityDefinitions.apiKey JWTAuth
 // @in header
 // @name Authorization
 func main() {
