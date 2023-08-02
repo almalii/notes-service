@@ -39,21 +39,21 @@ func main() {
 	go func() {
 		defer wg.Done()
 		if err := newAppGRPC.StartGRPC(); err != nil {
-			logrus.Fatalf("Не удалось запустить GRPC-сервер: %+v", err)
+			logrus.Fatalf("Failed to start GRPC server: %+v", err)
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
 		if err := newApp.Start(); err != nil {
-			logrus.Fatalf("Не удалось запустить HTTP сервер: %+v", err)
+			logrus.Fatalf("Failed to start HTTP server: %+v", err)
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
 		if err := newAppGRPC.StartGateway(); err != nil {
-			logrus.Fatalf("Не удалось запустить GRPC-Gateway сервер: %+v", err)
+			logrus.Fatalf("Failed to start GRPC-Gateway server: %+v", err)
 		}
 	}()
 
