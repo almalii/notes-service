@@ -10,12 +10,15 @@ import (
 
 func UpMigrations(c config.Config) error {
 	connStr := fmt.Sprintf(
-		"host=%s port=%s dbname=%s sslmode=%s",
+		"user=%s password=%s host=%s port=%s dbname=%s sslmode=%s",
+		c.DB.UserName,
+		c.DB.Password,
 		c.DB.Host,
 		c.DB.Port,
 		c.DB.DBName,
 		c.DB.SSLMode,
 	)
+
 	gooseDB, err := goose.OpenDBWithDriver(c.DB.Driver, connStr)
 	if err != nil {
 		logrus.Error("error opening db connection on migrations")

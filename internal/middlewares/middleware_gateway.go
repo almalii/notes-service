@@ -29,14 +29,20 @@ func HttpInterceptor(tm token_manager.TokenManager, next *runtime.ServeMux) http
 		authHeader := req.Header.Get(AuthorizationHeader)
 		if authHeader == "" {
 			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte("empty auth header"))
+			_, err := w.Write([]byte("empty auth header"))
+			if err != nil {
+				return
+			}
 			return
 		}
 
 		headerParts := strings.Split(authHeader, " ")
 		if len(headerParts) != 2 {
 			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte("invalid auth header"))
+			_, err := w.Write([]byte("invalid auth header"))
+			if err != nil {
+				return
+			}
 			return
 		}
 

@@ -28,12 +28,21 @@ func (c *UserController) Register(r chi.Router) {
 	r.Route("/users", func(r chi.Router) {
 		r.Use(middlewares.UserIdentity(c.tokenManager))
 		r.Get("/", c.GetUserHandler)
-		r.Put("/", c.UpdateUserHandler)
+		r.Patch("/", c.UpdateUserHandler)
 		r.Delete("/", c.DeleteUserHandler)
 	})
 
 }
 
+// @Summary GetUser
+// @Description get user
+// @Tags users
+// @Accept json
+// @Produce json
+// @Success 200 {object} models.UserOutput
+// @Failure 400 {object} integer
+// @Failure 500 {object} integer
+// @Router /users [get]
 func (c *UserController) GetUserHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -55,13 +64,22 @@ func (c *UserController) GetUserHandler(w http.ResponseWriter, r *http.Request) 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Authorization", r.Header.Get("Authorization"))
 	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(user)
-	if err != nil {
+	if err = json.NewEncoder(w).Encode(user); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
 
+// @Summary UpdateUser
+// @Description update user
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param user body controller.UpdateUserRequest true "User info"
+// @Success 200 {object} controller.UpdateUserRequest
+// @Failure 400 {object} integer
+// @Failure 500 {object} integer
+// @Router /users [patch]
 func (c *UserController) UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPut {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -83,8 +101,7 @@ func (c *UserController) UpdateUserHandler(w http.ResponseWriter, r *http.Reques
 
 	var req controller.UpdateUserRequest
 
-	err = json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
+	if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -100,13 +117,21 @@ func (c *UserController) UpdateUserHandler(w http.ResponseWriter, r *http.Reques
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(req)
-	if err != nil {
+	if err = json.NewEncoder(w).Encode(req); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
 
+// @Summary DeleteUser
+// @Description delete user
+// @Tags users
+// @Accept json
+// @Produce json
+// @Success 204
+// @Failure 400 {object} integer
+// @Failure 500 {object} integer
+// @Router /users [delete]
 func (c *UserController) DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		w.WriteHeader(http.StatusMethodNotAllowed)

@@ -5,7 +5,6 @@ import (
 	"errors"
 	pb_notes_model "github.com/almalii/grpc-contracts/gen/go/notes_service/model/v1"
 	pb_notes_service "github.com/almalii/grpc-contracts/gen/go/notes_service/service/v1"
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -23,8 +22,7 @@ type NoteUsecase interface {
 }
 
 type NotesServer struct {
-	usecase   NoteUsecase
-	validator *validator.Validate
+	usecase NoteUsecase
 	pb_notes_service.UnimplementedNotesServiceServer
 }
 

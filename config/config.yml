@@ -1,9 +1,9 @@
 data_base:
   host: "localhost"
   port: "5432"
-  username:
-  password:
-  dbname: "bookmarks"
+  username: "admin"
+  password: "hesoyam321!"
+  dbname: "notes"
   sslmode: "disable"
   driver: "pgx"
 

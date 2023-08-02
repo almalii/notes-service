@@ -29,6 +29,16 @@ func (c *AuthController) Register(r chi.Router) {
 	})
 }
 
+// @Summary SignUp
+// @Description create user
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param user body controller.SignUpRequest true "User info"
+// @Success 201 {object} controller.SignUpResponse
+// @Failure 400 {object} integer
+// @Failure 500 {object} integer
+// @Router /auth/register [post]
 func (c *AuthController) SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -39,8 +49,8 @@ func (c *AuthController) SignUpHandler(w http.ResponseWriter, r *http.Request) {
 
 	var req controller.SignUpRequest
 
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		logrus.Error(err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -59,9 +69,22 @@ func (c *AuthController) SignUpHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(resp)
+	if err = json.NewEncoder(w).Encode(resp); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
+// @Summary SignIn
+// @Description login user
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param user body controller.SignInRequest true "User info"
+// @Success 200 {object} models.AuthResponse
+// @Failure 400 {object} integer
+// @Failure 500 {object} integer
+// @Router /auth/login [post]
 func (c *AuthController) SignInHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -72,9 +95,8 @@ func (c *AuthController) SignInHandler(w http.ResponseWriter, r *http.Request) {
 
 	var req controller.SignInRequest
 
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		logrus.Errorf("error decoding request: %v", err)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		logrus.Error(err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -90,8 +112,10 @@ func (c *AuthController) SignInHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(resp)
-
+	if err = json.NewEncoder(w).Encode(resp); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (c *AuthController) SignOutHandler(w http.ResponseWriter, r *http.Request) {

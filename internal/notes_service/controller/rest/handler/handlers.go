@@ -33,11 +33,21 @@ func (c *NoteController) Register(r chi.Router) {
 		r.Post("/", c.CreateNoteHandler)
 		r.Get("/{id}", c.GetNoteHandler)
 		r.Get("/", c.GetAllNotesHandler)
-		r.Put("/{id}", c.UpdateNoteHandler)
+		r.Patch("/{id}", c.UpdateNoteHandler)
 		r.Delete("/{id}", c.DeleteNoteHandler)
 	})
 }
 
+// @Summary CreateNote
+// @Description create note
+// @Tags notes
+// @Accept json
+// @Produce json
+// @Param note body controller.CreateNoteRequest true "Note info"
+// @Success 201 {object} controller.NoteResponse
+// @Failure 400 {object} integer
+// @Failure 500 {object} integer
+// @Router /notes [post]
 func (c *NoteController) CreateNoteHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -53,8 +63,8 @@ func (c *NoteController) CreateNoteHandler(w http.ResponseWriter, r *http.Reques
 
 	var req controller.CreateNoteRequest
 
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		logrus.Error(err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -76,14 +86,22 @@ func (c *NoteController) CreateNoteHandler(w http.ResponseWriter, r *http.Reques
 
 	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(resp)
-	if err != nil {
+	if err = json.NewEncoder(w).Encode(resp); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 }
 
+// @Summary GetNote
+// @Description get note
+// @Tags notes
+// @Accept json
+// @Produce json
+// @Param id path string true "Note ID"
+// @Success 200 {object} models.NoteOutput
+// @Failure 400 {object} integer
+// @Failure 500 {object} integer
+// @Router /notes/{id} [get]
 func (c *NoteController) GetNoteHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -112,14 +130,21 @@ func (c *NoteController) GetNoteHandler(w http.ResponseWriter, r *http.Request) 
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(note)
-	if err != nil {
+	if err = json.NewEncoder(w).Encode(note); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 }
 
+// @Summary GetAllNotes
+// @Description get all notes
+// @Tags notes
+// @Accept json
+// @Produce json
+// @Success 200 {array} models.NoteOutput
+// @Failure 400 {object} integer
+// @Failure 500 {object} integer
+// @Router /notes [get]
 func (c *NoteController) GetAllNotesHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -141,13 +166,23 @@ func (c *NoteController) GetAllNotesHandler(w http.ResponseWriter, r *http.Reque
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(notes)
-	if err != nil {
+	if err = json.NewEncoder(w).Encode(notes); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
 
+// @Summary UpdateNote
+// @Description update note
+// @Tags notes
+// @Accept json
+// @Produce json
+// @Param id path string true "Note ID"
+// @Param note body controller.UpdateNoteRequest true "Note info"
+// @Success 200 {object} controller.UpdateNoteRequest
+// @Failure 400 {object} integer
+// @Failure 500 {object} integer
+// @Router /notes/{id} [patch]
 func (c *NoteController) UpdateNoteHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPut {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -176,8 +211,8 @@ func (c *NoteController) UpdateNoteHandler(w http.ResponseWriter, r *http.Reques
 
 	var req controller.UpdateNoteRequest
 
-	err = json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
+	if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
+		logrus.Error(err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -193,13 +228,22 @@ func (c *NoteController) UpdateNoteHandler(w http.ResponseWriter, r *http.Reques
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(req)
-	if err != nil {
+	if err = json.NewEncoder(w).Encode(req); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
 
+// @Summary DeleteNote
+// @Description delete note
+// @Tags notes
+// @Accept json
+// @Produce json
+// @Param id path string true "Note ID"
+// @Success 200 {object} integer
+// @Failure 400 {object} integer
+// @Failure 500 {object} integer
+// @Router /notes/{id} [delete]
 func (c *NoteController) DeleteNoteHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		w.WriteHeader(http.StatusMethodNotAllowed)

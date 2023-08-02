@@ -1,0 +1,422 @@
+basePath: /
+definitions:
+  controller.CreateNoteRequest:
+    properties:
+      body:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+      title:
+        maxLength: 50
+        minLength: 1
+        type: string
+    required:
+    - body
+    - title
+    type: object
+  controller.NoteResponse:
+    properties:
+      body:
+        type: string
+      id:
+        type: string
+      title:
+        type: string
+    type: object
+  controller.SignInRequest:
+    properties:
+      email:
+        maxLength: 254
+        minLength: 5
+        type: string
+      password:
+        maxLength: 30
+        minLength: 6
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  controller.SignUpRequest:
+    properties:
+      email:
+        maxLength: 254
+        minLength: 5
+        type: string
+      password:
+        type: string
+      username:
+        maxLength: 20
+        minLength: 3
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
+  controller.SignUpResponse:
+    properties:
+      id:
+        type: string
+    type: object
+  controller.UpdateNoteRequest:
+    properties:
+      body:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+      title:
+        maxLength: 50
+        minLength: 1
+        type: string
+      updated_at:
+        type: string
+    required:
+    - body
+    - title
+    type: object
+  controller.UpdateUserRequest:
+    properties:
+      email:
+        maxLength: 254
+        minLength: 5
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  models.AuthResponse:
+    properties:
+      token:
+        type: string
+    type: object
+  models.NoteOutput:
+    properties:
+      author:
+        type: string
+      body:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  models.UserOutput:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      updated_at:
+        type: string
+      username:
+        type: string
+    type: object
+host: localhost:8081
+info:
+  contact: {}
+  description: This is a sample notes-rew server.
+  title: Notes-Service API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: login user
+      parameters:
+      - description: User info
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/controller.SignInRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.AuthResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: integer
+        "500":
+          description: Internal Server Error
+          schema:
+            type: integer
+      summary: SignIn
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: create user
+      parameters:
+      - description: User info
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/controller.SignUpRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/controller.SignUpResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: integer
+        "500":
+          description: Internal Server Error
+          schema:
+            type: integer
+      summary: SignUp
+      tags:
+      - auth
+  /notes:
+    get:
+      consumes:
+      - application/json
+      description: get all notes
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.NoteOutput'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            type: integer
+        "500":
+          description: Internal Server Error
+          schema:
+            type: integer
+      summary: GetAllNotes
+      tags:
+      - notes
+    post:
+      consumes:
+      - application/json
+      description: create note
+      parameters:
+      - description: Note info
+        in: body
+        name: note
+        required: true
+        schema:
+          $ref: '#/definitions/controller.CreateNoteRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/controller.NoteResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: integer
+        "500":
+          description: Internal Server Error
+          schema:
+            type: integer
+      summary: CreateNote
+      tags:
+      - notes
+  /notes/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: delete note
+      parameters:
+      - description: Note ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+        "400":
+          description: Bad Request
+          schema:
+            type: integer
+        "500":
+          description: Internal Server Error
+          schema:
+            type: integer
+      summary: DeleteNote
+      tags:
+      - notes
+    get:
+      consumes:
+      - application/json
+      description: get note
+      parameters:
+      - description: Note ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.NoteOutput'
+        "400":
+          description: Bad Request
+          schema:
+            type: integer
+        "500":
+          description: Internal Server Error
+          schema:
+            type: integer
+      summary: GetNote
+      tags:
+      - notes
+    patch:
+      consumes:
+      - application/json
+      description: update note
+      parameters:
+      - description: Note ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Note info
+        in: body
+        name: note
+        required: true
+        schema:
+          $ref: '#/definitions/controller.UpdateNoteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.UpdateNoteRequest'
+        "400":
+          description: Bad Request
+          schema:
+            type: integer
+        "500":
+          description: Internal Server Error
+          schema:
+            type: integer
+      summary: UpdateNote
+      tags:
+      - notes
+  /users:
+    delete:
+      consumes:
+      - application/json
+      description: delete user
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            type: integer
+        "500":
+          description: Internal Server Error
+          schema:
+            type: integer
+      summary: DeleteUser
+      tags:
+      - users
+    get:
+      consumes:
+      - application/json
+      description: get user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UserOutput'
+        "400":
+          description: Bad Request
+          schema:
+            type: integer
+        "500":
+          description: Internal Server Error
+          schema:
+            type: integer
+      summary: GetUser
+      tags:
+      - users
+    patch:
+      consumes:
+      - application/json
+      description: update user
+      parameters:
+      - description: User info
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/controller.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.UpdateUserRequest'
+        "400":
+          description: Bad Request
+          schema:
+            type: integer
+        "500":
+          description: Internal Server Error
+          schema:
+            type: integer
+      summary: UpdateUser
+      tags:
+      - users
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

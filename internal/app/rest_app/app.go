@@ -3,6 +3,7 @@ package rest_app
 import (
 	"context"
 	"github.com/go-playground/validator/v10"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"log"
 	"net/http"
 	authController "notes-rew/internal/auth_service/controller/rest/handler"
@@ -43,6 +44,8 @@ func NewApp(ctx context.Context, cfg config.Config) *App {
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.Timeout(30 * time.Second))
+
+	router.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL("http://localhost:8081/swagger/doc.json")))
 
 	connectDB, err := postgres.ConnectionPostgresDB(ctx, cfg)
 	if err != nil {

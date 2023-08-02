@@ -10,7 +10,6 @@ import (
 	"notes-rew/internal/hash"
 	"notes-rew/internal/token_manager"
 	"strings"
-	"time"
 )
 
 type AuthService interface {
@@ -18,10 +17,6 @@ type AuthService interface {
 	AuthByEmail(ctx context.Context, req service.SignInInput) (models.AuthOutput, error)
 	CheckUserByEmail(ctx context.Context, email string) error
 }
-
-const (
-	tokenTTL = 12 * time.Hour
-)
 
 type AuthUsecase struct {
 	service      AuthService
