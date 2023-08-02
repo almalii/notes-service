@@ -2,11 +2,11 @@ package rest_app
 
 import (
 	"context"
-	_ "github.com/almalii/develop/swag"
 	"github.com/go-playground/validator/v10"
 	httpSwagger "github.com/swaggo/http-swagger"
 	"log"
 	"net/http"
+	_ "notes-rew/docs"
 	authController "notes-rew/internal/auth_service/controller/rest/handler"
 	authService "notes-rew/internal/auth_service/service"
 	authStorage "notes-rew/internal/auth_service/storage/postgres"
@@ -65,20 +65,20 @@ func NewApp(ctx context.Context, cfg config.Config) *App {
 
 	noteStorage := notesStorage.NewNoteStorage(connectDB)
 	noteService := notesService.NewNoteService(noteStorage)
-	noteUsecase := notesUsecase.NewNoteUsecase(noteService, validation)
-	noteController := notesController.NewNoteController(noteUsecase, tokenManager)
+	noteUsecase := notesUsecase.NewNoteUsecase(noteService)
+	noteController := notesController.NewNoteController(noteUsecase, validation, tokenManager)
 	noteController.Register(router)
 
 	userStorage := usersStorage.NewPSQLUserStorage(connectDB)
 	userService := usersService.NewUserService(userStorage)
-	userUsecase := usersUsecase.NewUserUsecase(userService, hasher, validation)
-	userController := usersController.NewUserController(userUsecase, tokenManager)
+	userUsecase := usersUsecase.NewUserUsecase(userService, hasher)
+	userController := usersController.NewUserController(userUsecase, tokenManager, validation)
 	userController.Register(router)
 
 	authsStorage := authStorage.NewUserStorage(connectDB)
 	authsService := authService.NewAuthService(authsStorage)
-	authsUsecase := authUsecase.NewAuthUsecase(authsService, hasher, tokenManager, validation)
-	authsController := authController.NewAuthController(authsUsecase)
+	authsUsecase := authUsecase.NewAuthUsecase(authsService, hasher, tokenManager)
+	authsController := authController.NewAuthController(authsUsecase, validation)
 	authsController.Register(router)
 
 	return &App{

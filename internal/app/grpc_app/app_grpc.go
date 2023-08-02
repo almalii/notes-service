@@ -68,25 +68,28 @@ func NewAppGRPC(ctx context.Context, cfg config.Config) *AppGRPC {
 
 	authsStorage := authStorage.NewUserStorage(connectDB)
 	authsService := authService.NewAuthService(authsStorage)
-	authsUsecase := authUsecase.NewAuthUsecase(authsService, hasher, tokenManager, validation)
+	authsUsecase := authUsecase.NewAuthUsecase(authsService, hasher, tokenManager)
 	authsControllerGRPC := authControllerGRPC.NewAuthServer(
 		authsUsecase,
+		validation,
 		pb_auth_service.UnimplementedAuthServiceServer{},
 	)
 
 	userStorage := usersStorage.NewPSQLUserStorage(connectDB)
 	userService := usersService.NewUserService(userStorage)
-	userUsecase := usersUsecase.NewUserUsecase(userService, hasher, validation)
+	userUsecase := usersUsecase.NewUserUsecase(userService, hasher)
 	userControllerGRPC := usersControllerGRPC.NewUsersServer(
 		userUsecase,
+		validation,
 		pb_users_service.UnimplementedUsersServiceServer{},
 	)
 
 	noteStorage := notesStorage.NewNoteStorage(connectDB)
 	noteService := notesService.NewNoteService(noteStorage)
-	noteUsecase := notesUsecase.NewNoteUsecase(noteService, validation)
+	noteUsecase := notesUsecase.NewNoteUsecase(noteService)
 	noteControllerGRPC := notesControllerGRPC.NewNotesServer(
 		noteUsecase,
+		validation,
 		pb_notes_service.UnimplementedNotesServiceServer{},
 	)
 

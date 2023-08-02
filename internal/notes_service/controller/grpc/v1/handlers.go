@@ -5,6 +5,7 @@ import (
 	"errors"
 	pb_notes_model "github.com/almalii/grpc-contracts/gen/go/notes_service/model/v1"
 	pb_notes_service "github.com/almalii/grpc-contracts/gen/go/notes_service/service/v1"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -22,7 +23,8 @@ type NoteUsecase interface {
 }
 
 type NotesServer struct {
-	usecase NoteUsecase
+	usecase   NoteUsecase
+	validator *validator.Validate
 	pb_notes_service.UnimplementedNotesServiceServer
 }
 
@@ -38,6 +40,11 @@ func (n *NotesServer) CreateNote(
 	}
 
 	input := dto.NewCreateNoteInput(currentUserID, req)
+
+	if err := n.validator.Struct(req); err != nil {
+		logrus.Error(err.(validator.ValidationErrors))
+		return nil, err
+	}
 
 	noteID, err := n.usecase.CreateNote(ctx, input)
 	if err != nil {
@@ -110,6 +117,11 @@ func (n *NotesServer) UpdateNote(
 		return nil, errors.New("error getting user id from context")
 	}
 
+	if err := n.validator.Struct(req); err != nil {
+		logrus.Error(err.(validator.ValidationErrors))
+		return nil, err
+	}
+
 	_, err := n.usecase.ReadNote(ctx, noteID, currentUserID)
 	if err != nil {
 		logrus.Error("error getting note: ", err)
@@ -157,10 +169,12 @@ func (n *NotesServer) DeleteNote(
 
 func NewNotesServer(
 	usecase NoteUsecase,
+	validator *validator.Validate,
 	unimplementedNotesServiceServer pb_notes_service.UnimplementedNotesServiceServer,
 ) *NotesServer {
 	return &NotesServer{
 		usecase:                         usecase,
+		validator:                       validator,
 		UnimplementedNotesServiceServer: unimplementedNotesServiceServer,
 	}
 }

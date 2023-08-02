@@ -5,6 +5,7 @@ import (
 	"errors"
 	pb_users_model "github.com/almalii/grpc-contracts/gen/go/users_service/model/v1"
 	pb_users_service "github.com/almalii/grpc-contracts/gen/go/users_service/service/v1"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -20,7 +21,8 @@ type UserUsecase interface {
 }
 
 type UsersServer struct {
-	usecase UserUsecase
+	usecase   UserUsecase
+	validator *validator.Validate
 	pb_users_service.UnimplementedUsersServiceServer
 }
 
@@ -65,6 +67,11 @@ func (u *UsersServer) UpdateUser(
 
 	input := dto.NewUpdateUserInput(req)
 
+	if err = u.validator.Struct(req); err != nil {
+		logrus.Error(err.(validator.ValidationErrors))
+		return nil, err
+	}
+
 	err = u.usecase.UpdateUser(ctx, input)
 	if err != nil {
 		logrus.Error("error updating user: ", err)
@@ -104,10 +111,12 @@ func (u *UsersServer) DeleteUser(
 
 func NewUsersServer(
 	usecase UserUsecase,
+	validator *validator.Validate,
 	unimplementedUsersServiceServer pb_users_service.UnimplementedUsersServiceServer,
 ) *UsersServer {
 	return &UsersServer{
 		usecase:                         usecase,
+		validator:                       validator,
 		UnimplementedUsersServiceServer: unimplementedUsersServiceServer,
 	}
 }

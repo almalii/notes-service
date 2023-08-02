@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"notes-rew/internal/auth_service/models"
@@ -22,15 +21,9 @@ type AuthUsecase struct {
 	service      AuthService
 	hasher       hash.Hasher
 	tokenManager token_manager.TokenManager
-	validator    *validator.Validate
 }
 
 func (u *AuthUsecase) CreateUser(ctx context.Context, req UserInput) (uuid.UUID, error) {
-	if err := u.validator.Struct(req); err != nil {
-		logrus.Error(err.(validator.ValidationErrors))
-		return uuid.Nil, err
-	}
-
 	err := u.service.CheckUserByEmail(ctx, strings.ToLower(req.Email))
 	if err != nil {
 		return uuid.Nil, err
@@ -53,11 +46,6 @@ func (u *AuthUsecase) CreateUser(ctx context.Context, req UserInput) (uuid.UUID,
 }
 
 func (u *AuthUsecase) AuthenticateUser(ctx context.Context, req AuthInput) (*models.AuthResponse, error) {
-	if err := u.validator.Struct(req); err != nil {
-		logrus.Error(err.(validator.ValidationErrors))
-		return nil, err
-	}
-
 	user, err := u.service.AuthByEmail(ctx, service.SignInInput(req))
 	if err != nil {
 		logrus.Errorf("user not found: %s", err)
@@ -82,11 +70,10 @@ func (u *AuthUsecase) AuthenticateUser(ctx context.Context, req AuthInput) (*mod
 	return &resp, nil
 }
 
-func NewAuthUsecase(service AuthService, hasher hash.Hasher, tokenManager token_manager.TokenManager, validator *validator.Validate) *AuthUsecase {
+func NewAuthUsecase(service AuthService, hasher hash.Hasher, tokenManager token_manager.TokenManager) *AuthUsecase {
 	return &AuthUsecase{
 		service:      service,
 		hasher:       hasher,
 		tokenManager: tokenManager,
-		validator:    validator,
 	}
 }

@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"notes-rew/internal/middlewares"
 	"notes-rew/internal/token_manager"
@@ -22,6 +24,7 @@ type UserUsecase interface {
 type UserController struct {
 	usecase      UserUsecase
 	tokenManager token_manager.TokenManager
+	validator    *validator.Validate
 }
 
 func (c *UserController) Register(r chi.Router) {
@@ -36,12 +39,13 @@ func (c *UserController) Register(r chi.Router) {
 
 // @Summary GetUser
 // @Description get user
+// @Security JWTAuth
 // @Tags users
 // @Accept json
 // @Produce json
-// @Success 200 {object} models.UserOutput
-// @Failure 400 {object} integer
-// @Failure 500 {object} integer
+// @Success 200
+// @Failure 400
+// @Failure 500
 // @Router /users [get]
 func (c *UserController) GetUserHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -72,16 +76,17 @@ func (c *UserController) GetUserHandler(w http.ResponseWriter, r *http.Request) 
 
 // @Summary UpdateUser
 // @Description update user
+// @Security JWTAuth
 // @Tags users
 // @Accept json
 // @Produce json
 // @Param user body controller.UpdateUserRequest true "User info"
-// @Success 200 {object} controller.UpdateUserRequest
-// @Failure 400 {object} integer
-// @Failure 500 {object} integer
+// @Success 200
+// @Failure 400
+// @Failure 500
 // @Router /users [patch]
 func (c *UserController) UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPut {
+	if r.Method != http.MethodPatch {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
@@ -107,6 +112,12 @@ func (c *UserController) UpdateUserHandler(w http.ResponseWriter, r *http.Reques
 	}
 	defer r.Body.Close()
 
+	if err = c.validator.Struct(req); err != nil {
+		logrus.Error(err.(validator.ValidationErrors))
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	domain := req.ToDomain(currentUserID)
 
 	err = c.usecase.UpdateUser(ctx, domain)
@@ -125,12 +136,13 @@ func (c *UserController) UpdateUserHandler(w http.ResponseWriter, r *http.Reques
 
 // @Summary DeleteUser
 // @Description delete user
+// @Security JWTAuth
 // @Tags users
 // @Accept json
 // @Produce json
 // @Success 204
-// @Failure 400 {object} integer
-// @Failure 500 {object} integer
+// @Failure 400
+// @Failure 500
 // @Router /users [delete]
 func (c *UserController) DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
@@ -160,9 +172,14 @@ func (c *UserController) DeleteUserHandler(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func NewUserController(usecase UserUsecase, tokenManager token_manager.TokenManager) *UserController {
+func NewUserController(
+	usecase UserUsecase,
+	tokenManager token_manager.TokenManager,
+	validator *validator.Validate,
+) *UserController {
 	return &UserController{
 		usecase:      usecase,
 		tokenManager: tokenManager,
+		validator:    validator,
 	}
 }

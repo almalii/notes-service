@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"github.com/go-playground/validator/v10"
 	"github.com/sirupsen/logrus"
 	"notes-rew/internal/hash"
 	"notes-rew/internal/users_service/models"
@@ -21,9 +20,8 @@ type UserService interface {
 }
 
 type UserUsecase struct {
-	service   UserService
-	hasher    hash.Hasher
-	validator *validator.Validate
+	service UserService
+	hasher  hash.Hasher
 }
 
 func (u *UserUsecase) ReadUser(ctx context.Context, id uuid.UUID) (models.UserOutput, error) {
@@ -31,11 +29,6 @@ func (u *UserUsecase) ReadUser(ctx context.Context, id uuid.UUID) (models.UserOu
 }
 
 func (u *UserUsecase) UpdateUser(ctx context.Context, req UpdateUserInput) error {
-	if err := u.validator.Struct(req); err != nil {
-		logrus.Error(err.(validator.ValidationErrors))
-		return err
-	}
-
 	err := u.service.CheckerByEmail(ctx, strings.ToLower(*req.Email))
 	if err != nil {
 		return err
@@ -61,10 +54,9 @@ func (u *UserUsecase) DeleteUser(ctx context.Context, id uuid.UUID) error {
 	return u.service.DeleteUserByID(ctx, id)
 }
 
-func NewUserUsecase(service UserService, hasher hash.Hasher, validator *validator.Validate) *UserUsecase {
+func NewUserUsecase(service UserService, hasher hash.Hasher) *UserUsecase {
 	return &UserUsecase{
-		service:   service,
-		hasher:    hasher,
-		validator: validator,
+		service: service,
+		hasher:  hasher,
 	}
 }

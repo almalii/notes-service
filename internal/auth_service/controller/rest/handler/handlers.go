@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"net/http"
@@ -18,14 +19,14 @@ type AuthUsecase interface {
 }
 
 type AuthController struct {
-	usecase AuthUsecase
+	usecase   AuthUsecase
+	validator *validator.Validate
 }
 
 func (c *AuthController) Register(r chi.Router) {
 	r.Route("/auth", func(r chi.Router) {
 		r.Post("/register", c.SignUpHandler)
 		r.Post("/login", c.SignInHandler)
-		r.Post("/logout", c.SignOutHandler)
 	})
 }
 
@@ -35,9 +36,9 @@ func (c *AuthController) Register(r chi.Router) {
 // @Accept json
 // @Produce json
 // @Param user body controller.SignUpRequest true "User info"
-// @Success 201 {object} controller.SignUpResponse
-// @Failure 400 {object} integer
-// @Failure 500 {object} integer
+// @Success 201
+// @Failure 400
+// @Failure 500
 // @Router /auth/register [post]
 func (c *AuthController) SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -55,6 +56,12 @@ func (c *AuthController) SignUpHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer r.Body.Close()
+
+	if err := c.validator.Struct(req); err != nil {
+		logrus.Error(err.(validator.ValidationErrors))
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	domain := req.ToDomain()
 
@@ -81,9 +88,9 @@ func (c *AuthController) SignUpHandler(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param user body controller.SignInRequest true "User info"
-// @Success 200 {object} models.AuthResponse
-// @Failure 400 {object} integer
-// @Failure 500 {object} integer
+// @Success 200
+// @Failure 400
+// @Failure 500
 // @Router /auth/login [post]
 func (c *AuthController) SignInHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -102,6 +109,12 @@ func (c *AuthController) SignInHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
+	if err := c.validator.Struct(req); err != nil {
+		logrus.Error(err.(validator.ValidationErrors))
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	domain := req.ToDomain()
 
 	resp, err := c.usecase.AuthenticateUser(ctx, domain)
@@ -118,17 +131,9 @@ func (c *AuthController) SignInHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (c *AuthController) SignOutHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-}
-
-func NewAuthController(usecase AuthUsecase) *AuthController {
+func NewAuthController(usecase AuthUsecase, validator *validator.Validate) *AuthController {
 	return &AuthController{
-		usecase: usecase,
+		usecase:   usecase,
+		validator: validator,
 	}
 }
