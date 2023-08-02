@@ -2,7 +2,7 @@ package rest_app
 
 import (
 	"context"
-	_ "github.com/almalii/develop"
+	_ "github.com/almalii/develop/swag"
 	"github.com/go-playground/validator/v10"
 	httpSwagger "github.com/swaggo/http-swagger"
 	"log"
