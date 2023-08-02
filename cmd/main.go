@@ -11,12 +11,16 @@ import (
 	"sync"
 )
 
-///@title Notes-rew API
-///@version 1.0
-///@description This is a sample notes-rew server.
+// @title Notes-Service API
+// @version 1.0
+// @description This is a sample notes-rew server.
 
-///@host localhost:8080
+// @host localhost:8081
+// @BasePath /
 
+// @securityDefinitions.apiKey ApiKeyAuth
+// @in header
+// @name Authorization
 func main() {
 	gob.Register(uuid.UUID{})
 	logrus.SetFormatter(&logrus.JSONFormatter{})
