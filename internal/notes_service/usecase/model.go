@@ -13,6 +13,12 @@ type CreateNoteInput struct {
 	Author uuid.UUID
 }
 
+// todo используй конструкторы
+
+func NewCreateNoteInput(title string, body string, tags []string, author uuid.UUID) *CreateNoteInput {
+	return &CreateNoteInput{Title: title, Body: body, Tags: tags, Author: author}
+}
+
 type UpdateNoteInput struct {
 	Title     *string   `json:"title" validate:"required,alphanum,min=1,max=50"`
 	Body      *string   `json:"body" validate:"required,bytesize"`

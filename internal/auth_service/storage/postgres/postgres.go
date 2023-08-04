@@ -3,9 +3,9 @@ package postgres
 import (
 	"context"
 	"errors"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5"
-	"github.com/sirupsen/logrus"
 	"notes-rew/internal/auth_service/models"
 	"notes-rew/internal/auth_service/service"
 	"notes-rew/internal/auth_service/storage"
@@ -20,14 +20,13 @@ func (s *UserStorage) SaveUserToDB(ctx context.Context, user service.CreateUser)
 		Columns("id", "username", "email", "password", "created_at", "updated_at").
 		Values(user.ID, user.Username, user.Email, user.PasswordHash, user.CreatedAt, user.UpdatedAt).
 		PlaceholderFormat(squirrel.Dollar).ToSql()
-
 	if err != nil {
-		logrus.Errorf("error while building squirrel query: %v", err)
+		return err
 	}
 
 	_, err = s.db.Exec(ctx, sql, args...)
 	if err != nil {
-		logrus.Errorf("error while executing squirrel query: %v", err)
+		return err
 	}
 
 	return nil
@@ -42,13 +41,11 @@ func (s *UserStorage) GetUserForAuth(ctx context.Context, email string) (models.
 		PlaceholderFormat(squirrel.Dollar).ToSql()
 
 	if err != nil {
-		logrus.Errorf("error while building squirrel query: %v", err)
 		return models.AuthOutput{}, err
 	}
 
 	err = s.db.QueryRow(ctx, sql, args...).Scan(&user.ID, &user.Username, &user.Email, &user.PasswordHash)
 	if err != nil {
-		logrus.Errorf("error while executing squirrel query: %v", err)
 		return models.AuthOutput{}, err
 	}
 
@@ -64,20 +61,16 @@ func (s *UserStorage) CheckUserByEmail(ctx context.Context, email string) error 
 		From("users").
 		Where(squirrel.Eq{"email": email}).
 		PlaceholderFormat(squirrel.Dollar).ToSql()
-
 	if err != nil {
-		logrus.Errorf("error while building squirrel query: %v", err)
 		return err
 	}
 
 	err = s.db.QueryRow(ctx, sql, args...).Scan(&count)
 	if err != nil {
-		logrus.Errorf("error while getting count by email: %v", err)
 		return err
 	}
 
 	if count > 0 {
-		// Вернуть стандартную ошибку с сообщением об ошибке.
 		return errors.New("user already exists")
 	}
 

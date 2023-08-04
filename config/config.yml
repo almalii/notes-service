@@ -9,24 +9,27 @@ data_base:
 
 http_server:
     address: "localhost:8081"
-    read_timeout: "10"
-    write_timeout: "10"
-    max_header_bytes: "1"
+#    read_timeout: 10 * time.Second
+#    write_timeout: 10 * time.Second
+#    max_header_bytes: 1048576
 
 grpc_server:
     address: "localhost:8082"
     read_timeout: "10"
     write_timeout: "10"
-    max_header_bytes: "1"
+    max_header_bytes: "1048576"
 
 grpc_gateway:
     address: "localhost:8083"
     read_timeout: "10"
     write_timeout: "10"
-    max_header_bytes: "1"
+    max_header_bytes: "1048576"
 
 
 migrations_dir: "../internal/db/migrations/"
+salt_hash: "d2h4u1NJ0GF3fdJl"
+jwt_signing: "sf54dvlDkJzp9aKv5bH"
+
 # salt for password hashing (to .env)
 # jwt_signing (to .env)
 

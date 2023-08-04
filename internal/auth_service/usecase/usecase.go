@@ -20,25 +20,27 @@ type AuthService interface {
 type AuthUsecase struct {
 	service      AuthService
 	hasher       hash.Hasher
-	tokenManager token_manager.TokenManager
+	tokenManager *token_manager.TokenManager
 }
 
 func (u *AuthUsecase) CreateUser(ctx context.Context, req UserInput) (uuid.UUID, error) {
 	err := u.service.CheckUserByEmail(ctx, strings.ToLower(req.Email))
 	if err != nil {
+		logrus.Printf("check user error: %s", err)
 		return uuid.Nil, err
 	}
 
 	hashedPassword, err := u.hasher.HasherPassword(req.Password)
 	if err != nil {
-		logrus.Errorf("hash password error: %s", err)
+		logrus.Printf("hash password error: %s", err)
+		return uuid.Nil, err
 	}
 
 	newUser := NewUserOutput(req.Username, req.Email, hashedPassword) // возвращает новый id
 
 	err = u.service.CreateUserServ(ctx, newUser)
 	if err != nil {
-		logrus.Errorf("save users error: %s", err)
+		logrus.Printf("save users error: %s", err)
 		return uuid.Nil, err
 	}
 
@@ -48,18 +50,18 @@ func (u *AuthUsecase) CreateUser(ctx context.Context, req UserInput) (uuid.UUID,
 func (u *AuthUsecase) AuthenticateUser(ctx context.Context, req AuthInput) (*models.AuthResponse, error) {
 	user, err := u.service.AuthByEmail(ctx, service.SignInInput(req))
 	if err != nil {
-		logrus.Errorf("user not found: %s", err)
+		logrus.Printf("user not found: %s", err)
 		return nil, err
 	}
 
 	if err = u.hasher.ComparePassword(user.PasswordHash, req.Password); err != nil {
-		logrus.Errorf("password is not correct: %s", err)
+		logrus.Printf("password is not correct: %s", err)
 		return nil, err
 	}
 
 	jwt, err := u.tokenManager.NewJWT(user.UserID.String())
 	if err != nil {
-		logrus.Errorf("jwt error: %s", err)
+		logrus.Printf("jwt error: %s", err)
 		return nil, err
 	}
 
@@ -70,7 +72,7 @@ func (u *AuthUsecase) AuthenticateUser(ctx context.Context, req AuthInput) (*mod
 	return &resp, nil
 }
 
-func NewAuthUsecase(service AuthService, hasher hash.Hasher, tokenManager token_manager.TokenManager) *AuthUsecase {
+func NewAuthUsecase(service AuthService, hasher hash.Hasher, tokenManager *token_manager.TokenManager) *AuthUsecase {
 	return &AuthUsecase{
 		service:      service,
 		hasher:       hasher,

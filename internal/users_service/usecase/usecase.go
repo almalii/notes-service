@@ -2,11 +2,11 @@ package usecase
 
 import (
 	"context"
-	"github.com/sirupsen/logrus"
+	"strings"
+
 	"notes-rew/internal/hash"
 	"notes-rew/internal/users_service/models"
 	"notes-rew/internal/users_service/service"
-	"strings"
 
 	"github.com/google/uuid"
 )
@@ -36,14 +36,13 @@ func (u *UserUsecase) UpdateUser(ctx context.Context, req UpdateUserInput) error
 
 	hashedPassword, err := u.hasher.HasherPassword(*req.Password)
 	if err != nil {
-		logrus.Errorf("hash password error: %s", err)
+		return err
 	}
 
 	userUpdate := NewUpdateUserToService(req.Username, req.Email, &hashedPassword)
 
 	err = u.service.UpdateUserByID(ctx, req.InitiatorID, userUpdate)
 	if err != nil {
-		logrus.Errorf("update users error: %s", err)
 		return err
 	}
 

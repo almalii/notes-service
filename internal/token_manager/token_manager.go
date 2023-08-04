@@ -12,17 +12,11 @@ const (
 	tokenTTL = 12 * time.Hour
 )
 
-type TokenManager interface {
-	NewJWT(userID string) (string, error)
-	ParseToken(accessToken string) (string, error)
-	NewRefreshToken() (string, error)
-}
-
-type tokenManager struct {
+type TokenManager struct {
 	signinKey string
 }
 
-func (t tokenManager) NewJWT(userID string) (string, error) {
+func (t *TokenManager) NewJWT(userID string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(tokenTTL)),
 		Subject:   userID,
@@ -31,7 +25,7 @@ func (t tokenManager) NewJWT(userID string) (string, error) {
 	return token.SignedString([]byte(t.signinKey))
 }
 
-func (t tokenManager) ParseToken(accessToken string) (string, error) {
+func (t *TokenManager) ParseToken(accessToken string) (string, error) {
 	token, err := jwt.ParseWithClaims(accessToken, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("invalid signing method")
@@ -51,7 +45,7 @@ func (t tokenManager) ParseToken(accessToken string) (string, error) {
 	return claims.Subject, nil
 }
 
-func (t tokenManager) NewRefreshToken() (string, error) {
+func (t *TokenManager) NewRefreshToken() (string, error) {
 	b := make([]byte, 32)
 
 	s := rand.NewSource(time.Now().UnixNano())
@@ -65,6 +59,6 @@ func (t tokenManager) NewRefreshToken() (string, error) {
 	return fmt.Sprintf("%x", b), nil
 }
 
-func NewTokenManager(signinKey string) TokenManager {
-	return &tokenManager{signinKey: signinKey}
+func NewTokenManager(signinKey string) *TokenManager {
+	return &TokenManager{signinKey: signinKey}
 }

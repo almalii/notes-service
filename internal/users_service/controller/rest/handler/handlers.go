@@ -23,7 +23,7 @@ type UserUsecase interface {
 
 type UserController struct {
 	usecase      UserUsecase
-	tokenManager token_manager.TokenManager
+	tokenManager *token_manager.TokenManager
 	validator    *validator.Validate
 }
 
@@ -37,6 +37,7 @@ func (c *UserController) Register(r chi.Router) {
 
 }
 
+// GetUserHandler
 // @Summary GetUser
 // @Description get user
 // @Security JWTAuth
@@ -48,19 +49,18 @@ func (c *UserController) Register(r chi.Router) {
 // @Failure 500
 // @Router /users [get]
 func (c *UserController) GetUserHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
 	ctx := r.Context()
+
 	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
 	if !ok {
+		logrus.Error("error reading id from context")
 		http.Error(w, "error reading id", http.StatusNotFound)
 		return
 	}
 
 	user, err := c.usecase.ReadUser(ctx, currentUserID)
 	if err != nil {
+		logrus.Error("error reading user", err)
 		http.Error(w, "error reading id", http.StatusNotFound)
 		return
 	}
@@ -74,6 +74,7 @@ func (c *UserController) GetUserHandler(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
+// UpdateUserHandler
 // @Summary UpdateUser
 // @Description update user
 // @Security JWTAuth
@@ -86,20 +87,19 @@ func (c *UserController) GetUserHandler(w http.ResponseWriter, r *http.Request) 
 // @Failure 500
 // @Router /users [patch]
 func (c *UserController) UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPatch {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
 
 	ctx := r.Context()
+
 	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
 	if !ok {
+		logrus.Error("error reading id from context")
 		http.Error(w, "error reading id", http.StatusNotFound)
 		return
 	}
 
 	_, err := c.usecase.ReadUser(ctx, currentUserID)
 	if err != nil {
+		logrus.Error("error reading user", err)
 		http.Error(w, "id is not found", http.StatusNotFound)
 		return
 	}
@@ -107,10 +107,10 @@ func (c *UserController) UpdateUserHandler(w http.ResponseWriter, r *http.Reques
 	var req controller.UpdateUserRequest
 
 	if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
+		logrus.Error(err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	defer r.Body.Close()
 
 	if err = c.validator.Struct(req); err != nil {
 		logrus.Error(err.(validator.ValidationErrors))
@@ -122,6 +122,7 @@ func (c *UserController) UpdateUserHandler(w http.ResponseWriter, r *http.Reques
 
 	err = c.usecase.UpdateUser(ctx, domain)
 	if err != nil {
+		logrus.Error("error updating user", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -134,6 +135,7 @@ func (c *UserController) UpdateUserHandler(w http.ResponseWriter, r *http.Reques
 	}
 }
 
+// DeleteUserHandler
 // @Summary DeleteUser
 // @Description delete user
 // @Security JWTAuth
@@ -145,26 +147,25 @@ func (c *UserController) UpdateUserHandler(w http.ResponseWriter, r *http.Reques
 // @Failure 500
 // @Router /users [delete]
 func (c *UserController) DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodDelete {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
-
 	ctx := r.Context()
+
 	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
 	if !ok {
+		logrus.Error("error reading id from context")
 		http.Error(w, "error reading id", http.StatusNotFound)
 		return
 	}
 
 	_, err := c.usecase.ReadUser(ctx, currentUserID)
 	if err != nil {
+		logrus.Error("error reading user", err)
 		http.Error(w, "id is not found", http.StatusNotFound)
 		return
 	}
 
 	err = c.usecase.DeleteUser(ctx, currentUserID)
 	if err != nil {
+		logrus.Error("error deleting user", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -174,7 +175,7 @@ func (c *UserController) DeleteUserHandler(w http.ResponseWriter, r *http.Reques
 
 func NewUserController(
 	usecase UserUsecase,
-	tokenManager token_manager.TokenManager,
+	tokenManager *token_manager.TokenManager,
 	validator *validator.Validate,
 ) *UserController {
 	return &UserController{

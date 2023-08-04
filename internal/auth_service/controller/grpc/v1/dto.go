@@ -1,4 +1,4 @@
-package dto
+package v1
 
 import (
 	pb_model "github.com/almalii/grpc-contracts/gen/go/auth_service/model/v1"

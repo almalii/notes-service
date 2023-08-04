@@ -18,7 +18,7 @@ func isAuthRequest(req string) bool {
 	return strings.Contains(req, requestEndpoint1) || strings.Contains(req, requestEndpoint2)
 }
 
-func HttpInterceptor(tm token_manager.TokenManager, next *runtime.ServeMux) http.HandlerFunc {
+func HttpInterceptor(tm *token_manager.TokenManager, next *runtime.ServeMux) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 
 		if isAuthRequest(req.URL.Path) {

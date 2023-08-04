@@ -41,7 +41,7 @@ func (s *SessionStore) Get(ctx context.Context, sessionID string) (*Session, err
 	}
 
 	var session *Session
-	err = json.Unmarshal(data, &session) // Обратите внимание на использование &session
+	err = json.Unmarshal(data, &session)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal session data: %w", err)
 	}

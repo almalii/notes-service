@@ -17,7 +17,7 @@ func isAuthMethod(info string) bool {
 	return strings.Contains(info, grpcService)
 }
 
-func UnaryTokenInterceptor(tm token_manager.TokenManager) grpc.UnaryServerInterceptor {
+func UnaryTokenInterceptor(tm *token_manager.TokenManager) grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
 		req interface{},

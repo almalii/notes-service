@@ -4,7 +4,6 @@ import (
 	"flag"
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/sirupsen/logrus"
-	"log"
 	"os"
 	"sync"
 )
@@ -16,7 +15,7 @@ type Config struct {
 	GatewayServer GatewayServer `yaml:"grpc_gateway"`
 	MigrationsDir string        `yaml:"migrations_dir" env:"MIGRATIONS_DIR"`
 	JwtSigning    string        `yaml:"jwt_signing" env:"JWT_SIGNING"`
-	Salt          string        `yaml:"salt" env:"SALT"`
+	SaltHash      string        `yaml:"salt_hash" env:"SALT_HASH"`
 }
 
 type DB struct {
@@ -31,6 +30,9 @@ type DB struct {
 
 type HTTPServer struct {
 	Address string `yaml:"address" env:"HTTP_SERVER_ADDRESS"`
+	//ReadTimeout    time.Duration `yaml:"read_timeout" env:"HTTP_SERVER_READ_TIME_OUT"`
+	//WriteTimeout   time.Duration `yaml:"write_timeout" env:"HTTP_SERVER_WRITE_TIME_OUT"`
+	//MaxHeaderBytes int           `yaml:"max_header_bytes" env:"HTTP_SERVER_MAX_HEADER"`
 }
 
 type GRPCServer struct {
@@ -98,7 +100,7 @@ func InitConfig() Config {
 			logrus.Fatal(helpErr)
 		}
 
-		log.Println("configuration loaded")
+		logrus.Println("configuration loaded")
 	})
 
 	return instance

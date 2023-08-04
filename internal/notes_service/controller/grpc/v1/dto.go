@@ -1,4 +1,4 @@
-package dto
+package v1
 
 import (
 	pb_notes_model "github.com/almalii/grpc-contracts/gen/go/notes_service/model/v1"
@@ -6,6 +6,8 @@ import (
 	"notes-rew/internal/notes_service/models"
 	"notes-rew/internal/notes_service/usecase"
 )
+
+// todo перенести в controller (в grpc или в rest)
 
 func NewCreateNoteInput(currentUser uuid.UUID, req *pb_notes_model.CreateNoteRequest) usecase.CreateNoteInput {
 	return usecase.CreateNoteInput{

@@ -2,15 +2,15 @@ package v1
 
 import (
 	"context"
-	"errors"
 	pb_notes_model "github.com/almalii/grpc-contracts/gen/go/notes_service/model/v1"
 	pb_notes_service "github.com/almalii/grpc-contracts/gen/go/notes_service/service/v1"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"notes-rew/internal/notes_service/models"
-	"notes-rew/internal/notes_service/models/dto"
 	"notes-rew/internal/notes_service/usecase"
 )
 
@@ -36,10 +36,10 @@ func (n *NotesServer) CreateNote(
 	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
 	if !ok {
 		logrus.Error("error getting user id from context")
-		return nil, errors.New("error getting user id from context")
+		return nil, status.Error(codes.Internal, "error getting user id")
 	}
 
-	input := dto.NewCreateNoteInput(currentUserID, req)
+	input := NewCreateNoteInput(currentUserID, req)
 
 	if err := n.validator.Struct(req); err != nil {
 		logrus.Error(err.(validator.ValidationErrors))
@@ -49,10 +49,10 @@ func (n *NotesServer) CreateNote(
 	noteID, err := n.usecase.CreateNote(ctx, input)
 	if err != nil {
 		logrus.Error("error creating note: ", err)
-		return nil, err
+		return nil, status.Error(codes.Internal, "error creating note")
 	}
 
-	resp := dto.NewCreateNoteResponse(noteID)
+	resp := NewCreateNoteResponse(noteID)
 
 	return resp, nil
 }
@@ -62,21 +62,21 @@ func (n *NotesServer) GetNote(
 	req *pb_notes_model.NoteIDRequest,
 ) (*pb_notes_model.GetNoteResponse, error) {
 
-	noteID := dto.NewGetNoteInput(req)
+	noteID := NewGetNoteInput(req)
 
 	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
 	if !ok {
 		logrus.Error("error getting user id from context")
-		return nil, errors.New("error getting user id from context")
+		return nil, status.Error(codes.Internal, "error getting user id")
 	}
 
 	note, err := n.usecase.ReadNote(ctx, noteID, currentUserID)
 	if err != nil {
 		logrus.Error("error getting note: ", err)
-		return nil, err
+		return nil, status.Error(codes.Internal, "error getting note")
 	}
 
-	resp := dto.NewGetNoteResponse(note)
+	resp := NewGetNoteResponse(note)
 
 	return resp, nil
 }
@@ -89,16 +89,16 @@ func (n *NotesServer) GetNotes(
 	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
 	if !ok {
 		logrus.Error("error getting user id from context")
-		return nil, errors.New("error getting user id from context")
+		return nil, status.Error(codes.Internal, "error getting user id")
 	}
 
 	notes, err := n.usecase.ReadAllNotes(ctx, currentUserID)
 	if err != nil {
 		logrus.Error("error getting notes: ", err)
-		return nil, err
+		return nil, status.Error(codes.Internal, "error getting notes")
 	}
 
-	resp := dto.NewGetNotesResponse(notes)
+	resp := NewGetNotesResponse(notes)
 
 	return resp, nil
 }
@@ -108,33 +108,33 @@ func (n *NotesServer) UpdateNote(
 	req *pb_notes_model.UpdateNoteRequest,
 ) (*pb_notes_model.UpdateNoteResponse, error) {
 
-	input := dto.NewUpdateNoteInput(req)
-	noteID := dto.NewCurrentNoteID(req)
+	input := NewUpdateNoteInput(req)
+	noteID := NewCurrentNoteID(req)
 
 	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
 	if !ok {
 		logrus.Error("error getting user id from context")
-		return nil, errors.New("error getting user id from context")
+		return nil, status.Error(codes.Internal, "error getting user id")
 	}
 
 	if err := n.validator.Struct(req); err != nil {
 		logrus.Error(err.(validator.ValidationErrors))
-		return nil, err
+		return nil, status.Error(codes.Internal, "error validating input")
 	}
 
 	_, err := n.usecase.ReadNote(ctx, noteID, currentUserID)
 	if err != nil {
 		logrus.Error("error getting note: ", err)
-		return nil, err
+		return nil, status.Error(codes.Internal, "error getting note")
 	}
 
 	err = n.usecase.UpdateNote(ctx, noteID, input)
 	if err != nil {
 		logrus.Error("error updating note: ", err)
-		return nil, err
+		return nil, status.Error(codes.Internal, "error updating note")
 	}
 
-	resp := dto.NewUpdateNoteResponse(input)
+	resp := NewUpdateNoteResponse(input)
 
 	return resp, nil
 }
@@ -144,24 +144,24 @@ func (n *NotesServer) DeleteNote(
 	req *pb_notes_model.NoteIDRequest,
 ) (*emptypb.Empty, error) {
 
-	noteID := dto.NewDeleteNoteInput(req)
+	noteID := NewDeleteNoteInput(req)
 
 	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
 	if !ok {
 		logrus.Error("error getting user id from context")
-		return nil, errors.New("error getting user id from context")
+		return nil, status.Error(codes.Internal, "error getting user id")
 	}
 
 	_, err := n.usecase.ReadNote(ctx, noteID, currentUserID)
 	if err != nil {
 		logrus.Error("error getting note: ", err)
-		return nil, err
+		return nil, status.Error(codes.Internal, "error getting note")
 	}
 
 	err = n.usecase.DeleteNote(ctx, noteID)
 	if err != nil {
 		logrus.Error("error deleting note: ", err)
-		return nil, err
+		return nil, status.Error(codes.Internal, "error deleting note")
 	}
 
 	return &emptypb.Empty{}, nil

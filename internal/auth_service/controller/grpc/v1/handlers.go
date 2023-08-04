@@ -7,16 +7,11 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"notes-rew/internal/auth_service/models"
-	"notes-rew/internal/auth_service/models/dto"
 	"notes-rew/internal/auth_service/usecase"
 )
-
-// TODO: если интерфейс используется в двух местах, где он должен находиться?
 
 type AuthUsecase interface {
 	CreateUser(ctx context.Context, req usecase.UserInput) (uuid.UUID, error)
@@ -30,26 +25,26 @@ type AuthServer struct {
 }
 
 func (s *AuthServer) SignUp(ctx context.Context, req *pb_model.SignUpRequest) (*pb_model.SignUpResponse, error) {
-	input := dto.NewSignUpInput(req)
+	input := NewSignUpInput(req)
 
 	if err := s.validator.Struct(req); err != nil {
 		logrus.Error(err.(validator.ValidationErrors))
-		return nil, status.Errorf(codes.InvalidArgument, "invalid argument")
+		return nil, status.Error(codes.InvalidArgument, "invalid argument")
 	}
 
 	userID, err := s.usecase.CreateUser(ctx, input)
 	if err != nil {
 		logrus.Errorf("error creating user: %v", err)
-		return nil, status.Errorf(codes.Internal, "error creating user")
+		return nil, status.Error(codes.Internal, "error creating user")
 	}
 
-	resp := dto.NewSignUpResponse(userID)
+	resp := NewSignUpResponse(userID)
 
 	return resp, nil
 }
 
 func (s *AuthServer) SignIn(ctx context.Context, req *pb_model.SignInRequest) (*pb_model.SignInResponse, error) {
-	input := dto.NewSignInInput(req)
+	input := NewSignInInput(req)
 
 	if err := s.validator.Struct(req); err != nil {
 		logrus.Error(err.(validator.ValidationErrors))
@@ -67,11 +62,11 @@ func (s *AuthServer) SignIn(ctx context.Context, req *pb_model.SignInRequest) (*
 	}
 
 	// TODO: оставить заголовок? или это сделает фронт?
-	err = grpc.SetHeader(ctx, metadata.New(map[string]string{"Authorization": authData.Token}))
-	if err != nil {
-		logrus.Errorf("error set header: %v", err)
-		return nil, status.Errorf(codes.Internal, "error set header")
-	}
+	//err = grpc.SetHeader(ctx, metadata.New(map[string]string{"Authorization": authData.Token}))
+	//if err != nil {
+	//	logrus.Errorf("error set header: %v", err)
+	//	return nil, status.Errorf(codes.Internal, "error set header")
+	//}
 
 	return &resp, nil
 }

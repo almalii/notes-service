@@ -5,7 +5,6 @@ import (
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/sirupsen/logrus"
 	"notes-rew/internal/notes_service/models"
 	"notes-rew/internal/notes_service/service"
 	"notes-rew/internal/notes_service/storage"
@@ -22,12 +21,12 @@ func (s *NoteStorage) CreateNoteByID(ctx context.Context, note service.CreateNot
 		PlaceholderFormat(squirrel.Dollar).ToSql()
 
 	if err != nil {
-		logrus.Errorf("error while building squirrel query: %v", err)
+		return err
 	}
 
 	_, err = s.db.Exec(ctx, sql, args...)
 	if err != nil {
-		logrus.Errorf("error while executing squirrel query: %v", err)
+		return err
 	}
 
 	return nil
@@ -42,7 +41,7 @@ func (s *NoteStorage) GetNoteByID(ctx context.Context, id uuid.UUID) (models.Not
 		PlaceholderFormat(squirrel.Dollar).ToSql()
 
 	if err != nil {
-		logrus.Errorf("error while building squirrel query: %v", err)
+		return models.NoteOutput{}, err
 	}
 
 	err = s.db.QueryRow(ctx, sql, args...).Scan(&note.ID, &note.Title, &note.Body, &note.Tags, &note.Author, &note.CreatedAt, &note.UpdatedAt)
@@ -61,7 +60,7 @@ func (s *NoteStorage) GetAllNotesByAuthorID(ctx context.Context, authorID uuid.U
 		PlaceholderFormat(squirrel.Dollar).ToSql()
 
 	if err != nil {
-		logrus.Errorf("error while building squirrel query: %v", err)
+		return nil, err
 	}
 
 	rows, err := s.db.Query(ctx, sql, args...)
@@ -73,14 +72,14 @@ func (s *NoteStorage) GetAllNotesByAuthorID(ctx context.Context, authorID uuid.U
 	var notes []models.NoteOutput
 	for rows.Next() {
 		var note models.NoteOutput
-		err := rows.Scan(&note.ID, &note.Title, &note.Body, &note.Tags, &note.Author, &note.CreatedAt, &note.UpdatedAt)
+		err = rows.Scan(&note.ID, &note.Title, &note.Body, &note.Tags, &note.Author, &note.CreatedAt, &note.UpdatedAt)
 		if err != nil {
 			return nil, err
 		}
 		notes = append(notes, note)
 	}
 
-	if err := rows.Err(); err != nil {
+	if err = rows.Err(); err != nil {
 		return nil, err
 	}
 
@@ -98,12 +97,12 @@ func (s *NoteStorage) UpdateNoteByID(ctx context.Context, id uuid.UUID, note ser
 		PlaceholderFormat(squirrel.Dollar).ToSql()
 
 	if err != nil {
-		logrus.Errorf("error while building squirrel query: %v", err)
+		return err
 	}
 
 	_, err = s.db.Exec(ctx, sql, args...)
 	if err != nil {
-		logrus.Errorf("error while executing squirrel query: %v", err)
+		return err
 	}
 
 	return nil
@@ -115,12 +114,12 @@ func (s *NoteStorage) DeleteNoteByID(ctx context.Context, id uuid.UUID) error {
 		PlaceholderFormat(squirrel.Dollar).ToSql()
 
 	if err != nil {
-		logrus.Errorf("error while building squirrel query: %v", err)
+		return err
 	}
 
 	_, err = s.db.Exec(ctx, sql, args...)
 	if err != nil {
-		logrus.Errorf("error while executing squirrel query: %v", err)
+		return err
 	}
 
 	return nil

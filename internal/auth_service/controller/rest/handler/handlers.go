@@ -30,6 +30,7 @@ func (c *AuthController) Register(r chi.Router) {
 	})
 }
 
+// SignUpHandler
 // @Summary SignUp
 // @Description create user
 // @Tags auth
@@ -41,21 +42,15 @@ func (c *AuthController) Register(r chi.Router) {
 // @Failure 500
 // @Router /auth/register [post]
 func (c *AuthController) SignUpHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
-
 	ctx := r.Context()
 
 	var req controller.SignUpRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logrus.Error(err)
+		logrus.Errorf("error decoding request: %v", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	defer r.Body.Close()
 
 	if err := c.validator.Struct(req); err != nil {
 		logrus.Error(err.(validator.ValidationErrors))
@@ -82,6 +77,7 @@ func (c *AuthController) SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// SignInHandler
 // @Summary SignIn
 // @Description login user
 // @Tags auth
@@ -93,21 +89,15 @@ func (c *AuthController) SignUpHandler(w http.ResponseWriter, r *http.Request) {
 // @Failure 500
 // @Router /auth/login [post]
 func (c *AuthController) SignInHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
-
 	ctx := r.Context()
 
 	var req controller.SignInRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logrus.Error(err)
+		logrus.Errorf("error decoding request: %v", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	defer r.Body.Close()
 
 	if err := c.validator.Struct(req); err != nil {
 		logrus.Error(err.(validator.ValidationErrors))

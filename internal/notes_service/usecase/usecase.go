@@ -3,12 +3,12 @@ package usecase
 import (
 	"context"
 	"fmt"
-	"notes-rew/internal/notes_service/models"
-	"notes-rew/internal/notes_service/service"
 	"time"
 
+	"notes-rew/internal/notes_service/models"
+	"notes-rew/internal/notes_service/service"
+
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 )
 
 type NoteService interface {
@@ -36,7 +36,7 @@ func (u *NoteUsecase) CreateNote(ctx context.Context, req CreateNoteInput) (uuid
 
 	err := u.service.SaveNoteByID(ctx, createNote)
 	if err != nil {
-		logrus.Errorf("error saving notes_service: %v", err)
+		return uuid.Nil, err
 	}
 
 	return createNote.ID, nil
@@ -45,12 +45,10 @@ func (u *NoteUsecase) CreateNote(ctx context.Context, req CreateNoteInput) (uuid
 func (u *NoteUsecase) ReadNote(ctx context.Context, noteID, currentUserID uuid.UUID) (models.NoteOutput, error) {
 	note, err := u.service.GetNoteByID(ctx, noteID)
 	if err != nil {
-		logrus.Errorf("error reading notes: %v", err)
 		return models.NoteOutput{}, err
 	}
 
 	if note.Author != currentUserID {
-		logrus.Error("user is not author of this note")
 		return models.NoteOutput{}, fmt.Errorf("user is not author of this note")
 	}
 
@@ -64,7 +62,7 @@ func (u *NoteUsecase) ReadAllNotes(ctx context.Context, currentUserID uuid.UUID)
 func (u *NoteUsecase) UpdateNote(ctx context.Context, id uuid.UUID, req UpdateNoteInput) error {
 	noteUpdate, err := NewUpdateNoteInput(req.Title, req.Body, req.Tags)
 	if err != nil {
-		logrus.Errorf("error updating notes_service: %v", err)
+		return err
 	}
 
 	return u.service.UpdateNoteByID(ctx, id, service.UpdateNote(noteUpdate))

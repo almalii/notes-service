@@ -23,12 +23,12 @@ func (s *PSQLUserStorage) CreateUserByID(ctx context.Context, user service.Creat
 		PlaceholderFormat(squirrel.Dollar).ToSql()
 
 	if err != nil {
-		logrus.Errorf("error while building squirrel query: %v", err)
+		return err
 	}
 
 	_, err = s.db.Exec(ctx, sql, args...)
 	if err != nil {
-		logrus.Errorf("error while executing squirrel query: %v", err)
+		return err
 	}
 
 	return nil
@@ -43,7 +43,7 @@ func (s *PSQLUserStorage) GetUserByID(ctx context.Context, id uuid.UUID) (models
 		PlaceholderFormat(squirrel.Dollar).ToSql()
 
 	if err != nil {
-		logrus.Errorf("error while building squirrel query: %v", err)
+		return models.UserOutput{}, err
 	}
 
 	err = s.db.QueryRow(ctx, sql, args...).Scan(&user.ID, &user.Username, &user.Email, &user.CreatedAt, &user.UpdatedAt)
@@ -65,12 +65,12 @@ func (s *PSQLUserStorage) UpdateUserByID(ctx context.Context, id uuid.UUID, user
 		PlaceholderFormat(squirrel.Dollar).ToSql()
 
 	if err != nil {
-		logrus.Errorf("error while building squirrel query: %v", err)
+		return err
 	}
 
 	_, err = s.db.Exec(ctx, sql, args...)
 	if err != nil {
-		logrus.Errorf("error while executing squirrel query: %v", err)
+		return err
 	}
 
 	return nil
@@ -83,12 +83,12 @@ func (s *PSQLUserStorage) DeleteUserByID(ctx context.Context, id uuid.UUID) erro
 		PlaceholderFormat(squirrel.Dollar).ToSql()
 
 	if err != nil {
-		logrus.Errorf("error while building squirrel query: %v", err)
+		return err
 	}
 
 	_, err = s.db.Exec(ctx, sql, args...)
 	if err != nil {
-		logrus.Errorf("error while executing squirrel query: %v", err)
+		return err
 	}
 
 	return nil
@@ -103,15 +103,13 @@ func (s *PSQLUserStorage) GetUserForAuth(ctx context.Context, email string) (mod
 		PlaceholderFormat(squirrel.Dollar).ToSql()
 
 	if err != nil {
-		logrus.Errorf("error while building squirrel query: %v", err)
 		return models.AuthOutput{}, err
 	}
 
 	err = s.db.QueryRow(ctx, sql, args...).Scan(&user.ID, &user.Username, &user.Email, &user.Password)
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			logrus.Println("users_service not found")
-			return models.AuthOutput{}, err
+			return models.AuthOutput{}, errors.New("user not found")
 		}
 		logrus.Errorf("error while getting users_service by auth_service: %v", err)
 		return models.AuthOutput{}, err
@@ -129,18 +127,15 @@ func (s *PSQLUserStorage) CheckUserByEmail(ctx context.Context, email string) er
 		PlaceholderFormat(squirrel.Dollar).ToSql()
 
 	if err != nil {
-		logrus.Errorf("error while building squirrel query: %v", err)
 		return err
 	}
 
 	err = s.db.QueryRow(ctx, sql, args...).Scan(&count)
 	if err != nil {
-		logrus.Errorf("error while getting count by email: %v", err)
 		return err
 	}
 
 	if count > 0 {
-		// Вернуть стандартную ошибку с сообщением об ошибке.
 		return errors.New("user already exists")
 	}
 

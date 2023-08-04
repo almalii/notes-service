@@ -3,11 +3,12 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"net/http"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-	"net/http"
 	"notes-rew/internal/middlewares"
 	"notes-rew/internal/notes_service/controller"
 	"notes-rew/internal/notes_service/models"
@@ -26,7 +27,7 @@ type NoteUsecase interface {
 type NoteController struct {
 	usecase      NoteUsecase
 	validator    *validator.Validate
-	tokenManager token_manager.TokenManager
+	tokenManager *token_manager.TokenManager
 }
 
 func (c *NoteController) Register(r chi.Router) {
@@ -40,6 +41,7 @@ func (c *NoteController) Register(r chi.Router) {
 	})
 }
 
+// CreateNoteHandler
 // @Summary CreateNote
 // @Description create note
 // @Security JWTAuth
@@ -52,14 +54,12 @@ func (c *NoteController) Register(r chi.Router) {
 // @Failure 500
 // @Router /notes [post]
 func (c *NoteController) CreateNoteHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
-
 	ctx := r.Context()
+
+	// todo вынести в метод, константа
 	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
 	if !ok {
+		logrus.Error("error reading id from context")
 		http.Error(w, "error reading id", http.StatusNotFound)
 		return
 	}
@@ -71,7 +71,6 @@ func (c *NoteController) CreateNoteHandler(w http.ResponseWriter, r *http.Reques
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	defer r.Body.Close()
 
 	if err := c.validator.Struct(req); err != nil {
 		logrus.Error(err.(validator.ValidationErrors))
@@ -83,6 +82,7 @@ func (c *NoteController) CreateNoteHandler(w http.ResponseWriter, r *http.Reques
 
 	noteID, err := c.usecase.CreateNote(ctx, domain)
 	if err != nil {
+		logrus.Error("error creating note", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -101,6 +101,7 @@ func (c *NoteController) CreateNoteHandler(w http.ResponseWriter, r *http.Reques
 	}
 }
 
+// GetNoteHandler
 // @Summary GetNote
 // @Description get note
 // @Security JWTAuth
@@ -113,14 +114,11 @@ func (c *NoteController) CreateNoteHandler(w http.ResponseWriter, r *http.Reques
 // @Failure 500
 // @Router /notes/{id} [get]
 func (c *NoteController) GetNoteHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
-
 	ctx := r.Context()
+
 	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
 	if !ok {
+		logrus.Error("error reading id from context")
 		http.Error(w, "error reading id", http.StatusNotFound)
 		return
 	}
@@ -134,6 +132,7 @@ func (c *NoteController) GetNoteHandler(w http.ResponseWriter, r *http.Request) 
 
 	note, err := c.usecase.ReadNote(ctx, parsedUUID, currentUserID)
 	if err != nil {
+		logrus.Error("error reading note", err)
 		http.Error(w, "error reading id", http.StatusNotFound)
 		return
 	}
@@ -146,6 +145,7 @@ func (c *NoteController) GetNoteHandler(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
+// GetAllNotesHandler
 // @Summary GetAllNotes
 // @Description get all notes
 // @Security JWTAuth
@@ -157,14 +157,11 @@ func (c *NoteController) GetNoteHandler(w http.ResponseWriter, r *http.Request) 
 // @Failure 500
 // @Router /notes [get]
 func (c *NoteController) GetAllNotesHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
-
 	ctx := r.Context()
+
 	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
 	if !ok {
+		logrus.Error("error reading id from context")
 		http.Error(w, "error reading id", http.StatusNotFound)
 		return
 	}
@@ -183,6 +180,7 @@ func (c *NoteController) GetAllNotesHandler(w http.ResponseWriter, r *http.Reque
 	}
 }
 
+// UpdateNoteHandler
 // @Summary UpdateNote
 // @Description update note
 // @Security JWTAuth
@@ -196,14 +194,11 @@ func (c *NoteController) GetAllNotesHandler(w http.ResponseWriter, r *http.Reque
 // @Failure 500
 // @Router /notes/{id} [patch]
 func (c *NoteController) UpdateNoteHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPatch {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
-
 	ctx := r.Context()
+
 	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
 	if !ok {
+		logrus.Error("error reading id from context")
 		http.Error(w, "error reading id", http.StatusNotFound)
 		return
 	}
@@ -228,7 +223,6 @@ func (c *NoteController) UpdateNoteHandler(w http.ResponseWriter, r *http.Reques
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	defer r.Body.Close()
 
 	if err = c.validator.Struct(req); err != nil {
 		logrus.Error(err.(validator.ValidationErrors))
@@ -252,6 +246,7 @@ func (c *NoteController) UpdateNoteHandler(w http.ResponseWriter, r *http.Reques
 	}
 }
 
+// DeleteNoteHandler
 // @Summary DeleteNote
 // @Description delete note
 // @Security JWTAuth
@@ -264,14 +259,11 @@ func (c *NoteController) UpdateNoteHandler(w http.ResponseWriter, r *http.Reques
 // @Failure 500
 // @Router /notes/{id} [delete]
 func (c *NoteController) DeleteNoteHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodDelete {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
-
 	ctx := r.Context()
+
 	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
 	if !ok {
+		logrus.Error("error reading id from context")
 		http.Error(w, "error reading id", http.StatusNotFound)
 		return
 	}
@@ -301,7 +293,7 @@ func (c *NoteController) DeleteNoteHandler(w http.ResponseWriter, r *http.Reques
 func NewNoteController(
 	usecase NoteUsecase,
 	validator *validator.Validate,
-	tokenManager token_manager.TokenManager,
+	tokenManager *token_manager.TokenManager,
 ) *NoteController {
 	return &NoteController{
 		usecase:      usecase,
