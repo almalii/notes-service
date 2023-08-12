@@ -18,7 +18,7 @@ import (
 
 type NoteUsecase interface {
 	CreateNote(ctx context.Context, req usecase.CreateNoteInput) (uuid.UUID, error)
-	ReadNote(ctx context.Context, noteID, currentUserID uuid.UUID) (models.NoteOutput, error)
+	ReadNote(ctx context.Context, noteID, currentUserID uuid.UUID) (*models.NoteOutput, error)
 	ReadAllNotes(ctx context.Context, currentUserID uuid.UUID) ([]models.NoteOutput, error)
 	UpdateNote(ctx context.Context, id uuid.UUID, req usecase.UpdateNoteInput) error
 	DeleteNote(ctx context.Context, id uuid.UUID) error

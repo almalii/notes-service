@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/http"
 	authControllerGRPC "notes-rew/internal/auth_service/controller/grpc/v1"
+	"notes-rew/internal/db/redis"
 	"notes-rew/internal/middlewares"
 	notesControllerGRPC "notes-rew/internal/notes_service/controller/grpc/v1"
 	usersControllerGRPC "notes-rew/internal/users_service/controller/grpc/v1"
@@ -46,8 +47,8 @@ import (
 )
 
 const (
-	requestTimeout = 5 * time.Second
-	contextTimeout = 5 * time.Second
+	requestTimeout = 10 * time.Second
+	contextTimeout = 10 * time.Second
 	swaggerURL     = "http://localhost:8081/swagger/doc.json"
 )
 
@@ -84,6 +85,11 @@ func NewApp(ctx context.Context, cfg config.Config) *App {
 		logrus.Errorf("Failed to migrate: %+v", err)
 	}
 
+	connectRedis, err := redis.ConnectionRedisStorage(ctx, cfg)
+	if err != nil {
+		logrus.Fatalf("Failed to connect to Redis: %+v", err)
+	}
+
 	validation := validator.New()
 	validators.RegisterCustomValidation(validation)
 
@@ -92,7 +98,7 @@ func NewApp(ctx context.Context, cfg config.Config) *App {
 	hasher := hash.NewPasswordHasher(cfg.SaltHash)
 
 	noteStorage := notesStorage.NewNoteStorage(connectDB)
-	noteService := notesService.NewNoteService(noteStorage)
+	noteService := notesService.NewNoteService(noteStorage, connectRedis)
 	noteUsecase := notesUsecase.NewNoteUsecase(noteService)
 	noteController := notesController.NewNoteController(noteUsecase, validation, tokenManager)
 	noteController.Register(router)

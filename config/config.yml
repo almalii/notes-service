@@ -7,6 +7,11 @@ data_base:
   sslmode: "disable"
   driver: "pgx"
 
+redis:
+  address: "0.0.0.0:32769"
+  password:
+  db: 0
+
 http_server:
     address: "localhost:8081"
 #    read_timeout: 10 * time.Second

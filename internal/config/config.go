@@ -13,6 +13,7 @@ type Config struct {
 	HTTPServer    HTTPServer    `yaml:"http_server"`
 	GRPCServer    GRPCServer    `yaml:"grpc_server"`
 	GatewayServer GatewayServer `yaml:"grpc_gateway"`
+	Redis         Redis         `yaml:"redis"`
 	MigrationsDir string        `yaml:"migrations_dir" env:"MIGRATIONS_DIR"`
 	JwtSigning    string        `yaml:"jwt_signing" env:"JWT_SIGNING"`
 	SaltHash      string        `yaml:"salt_hash" env:"SALT_HASH"`
@@ -26,6 +27,12 @@ type DB struct {
 	UserName string `yaml:"username" env:"DB_USERNAME"`
 	Password string `yaml:"password" env:"DB_PASSWORD"`
 	Driver   string `yaml:"driver" env:"DB_DRIVER"`
+}
+
+type Redis struct {
+	Address  string `yaml:"address" env:"REDIS_ADDRESS"`
+	Password string `yaml:"password" env:"REDIS_PASSWORD"`
+	DB       int    `yaml:"db" env:"REDIS_DB"`
 }
 
 type HTTPServer struct {

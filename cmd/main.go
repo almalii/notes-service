@@ -23,7 +23,7 @@ import (
 // @name Authorization
 func main() {
 	gob.Register(uuid.UUID{})
-	//logrus.SetFormatter(&logrus.JSONFormatter{})
+	logrus.SetFormatter(&logrus.JSONFormatter{})
 
 	cfg := config.InitConfig()
 	ctx := context.Background()

@@ -13,7 +13,7 @@ import (
 
 type NoteService interface {
 	SaveNoteByID(ctx context.Context, note service.CreateNote) error
-	GetNoteByID(ctx context.Context, id uuid.UUID) (models.NoteOutput, error)
+	GetNoteByID(ctx context.Context, id uuid.UUID) (*models.NoteOutput, error)
 	GetAllNotesByAuthorID(ctx context.Context, currentUserID uuid.UUID) ([]models.NoteOutput, error)
 	UpdateNoteByID(ctx context.Context, id uuid.UUID, note service.UpdateNote) error
 	DeleteNoteByID(ctx context.Context, id uuid.UUID) error
@@ -42,14 +42,14 @@ func (u *NoteUsecase) CreateNote(ctx context.Context, req CreateNoteInput) (uuid
 	return createNote.ID, nil
 }
 
-func (u *NoteUsecase) ReadNote(ctx context.Context, noteID, currentUserID uuid.UUID) (models.NoteOutput, error) {
+func (u *NoteUsecase) ReadNote(ctx context.Context, noteID, currentUserID uuid.UUID) (*models.NoteOutput, error) {
 	note, err := u.service.GetNoteByID(ctx, noteID)
 	if err != nil {
-		return models.NoteOutput{}, err
+		return nil, err
 	}
 
 	if note.Author != currentUserID {
-		return models.NoteOutput{}, fmt.Errorf("user is not author of this note")
+		return nil, fmt.Errorf("user is not author of this note")
 	}
 
 	return note, nil
