@@ -1,5 +1,5 @@
 data_base:
-  host: "localhost"
+  host: "ns-postgres"
   port: "5432"
   username: "admin"
   password: "hesoyam321!"
@@ -8,7 +8,7 @@ data_base:
   driver: "pgx"
 
 redis:
-  address: "0.0.0.0:32769"
+  address: "ns-redis:6379"
   password:
   db: 0
 
@@ -31,11 +31,8 @@ grpc_gateway:
     max_header_bytes: "1048576"
 
 
-migrations_dir: "../internal/db/migrations/"
+migrations_dir: "./internal/db/migrations/"
 salt_hash: "d2h4u1NJ0GF3fdJl"
 jwt_signing: "sf54dvlDkJzp9aKv5bH"
-
-# salt for password hashing (to .env)
-# jwt_signing (to .env)
 
 

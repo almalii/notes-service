@@ -1,12 +1,11 @@
 package config
 
 import (
-	"flag"
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/sirupsen/logrus"
-	"os"
-	"sync"
 )
+
+const configPath = "../config/config.yml"
 
 type Config struct {
 	DB            DB            `yaml:"data_base"`
@@ -50,69 +49,12 @@ type GatewayServer struct {
 	Address string `yaml:"address" env:"GATEWAY_SERVER_ADDRESS"`
 }
 
-const (
-	FlagConfigPathName = "config"
-	EnvConfigPathName  = "CONFIG_PATH"
-	FlagEnvPathName    = "env"
-	EnvEnvPathName     = "ENV_PATH"
-)
-
-var (
-	configPath string
-	envPath    string
-	instance   Config
-	once       sync.Once
-	onceFlag   sync.Once
-)
-
 func InitConfig() Config {
-	once.Do(func() {
-		// этот кодв выполнится только 1 раз при первом вызове этого метода
+	var cfg Config
+	if err := cleanenv.ReadConfig(configPath, &cfg); err != nil {
+		logrus.Error("error read config")
+		panic(err)
+	}
 
-		// 1. parse flag
-		onceFlag.Do(func() {
-			flag.StringVar(
-				&configPath,
-				FlagConfigPathName,
-				"config/config.yml",
-				"path to config file",
-			)
-			flag.StringVar(
-				&envPath,
-				FlagEnvPathName,
-				"config/.env",
-				"path to .env file",
-			)
-
-			flag.Parse()
-		})
-
-		// 2. read env
-		if p, ok := os.LookupEnv(EnvConfigPathName); ok {
-			configPath = p
-		}
-
-		if p, ok := os.LookupEnv(EnvEnvPathName); ok {
-			envPath = p
-		}
-
-		if err := cleanenv.ReadConfig(configPath, &instance); err != nil {
-			help, helpErr := cleanenv.GetDescription(&instance, nil)
-			if helpErr != nil {
-				logrus.Printf("error get config description due error: %v\n", helpErr)
-			} else {
-				logrus.Println(help)
-			}
-
-			logrus.Fatal(helpErr)
-		}
-
-		logrus.Println("configuration loaded")
-	})
-
-	return instance
-}
-
-func ResetOnce() {
-	once = sync.Once{}
+	return cfg
 }
