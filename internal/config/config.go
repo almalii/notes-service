@@ -3,9 +3,13 @@ package config
 import (
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/sirupsen/logrus"
+	"time"
 )
 
-const configPath = "../config/config.yml"
+const (
+	product = "./config/prod.yml"
+	local   = "./config/local.yml"
+)
 
 type Config struct {
 	DB            DB            `yaml:"data_base"`
@@ -14,8 +18,8 @@ type Config struct {
 	GatewayServer GatewayServer `yaml:"grpc_gateway"`
 	Redis         Redis         `yaml:"redis"`
 	MigrationsDir string        `yaml:"migrations_dir" env:"MIGRATIONS_DIR"`
-	JwtSigning    string        `yaml:"jwt_signing" env:"JWT_SIGNING"`
-	SaltHash      string        `yaml:"salt_hash" env:"SALT_HASH"`
+	JwtSigning    string        `yaml:"jwt_signing" env-required:"true" env:"JWT_SIGNING"`
+	SaltHash      string        `yaml:"salt_hash" env-required:"true" env:"SALT_HASH"`
 }
 
 type DB struct {
@@ -35,10 +39,10 @@ type Redis struct {
 }
 
 type HTTPServer struct {
-	Address string `yaml:"address" env:"HTTP_SERVER_ADDRESS"`
-	//ReadTimeout    time.Duration `yaml:"read_timeout" env:"HTTP_SERVER_READ_TIME_OUT"`
-	//WriteTimeout   time.Duration `yaml:"write_timeout" env:"HTTP_SERVER_WRITE_TIME_OUT"`
-	//MaxHeaderBytes int           `yaml:"max_header_bytes" env:"HTTP_SERVER_MAX_HEADER"`
+	Address        string        `yaml:"address" env:"HTTP_SERVER_ADDRESS"`
+	ReadTimeout    time.Duration `yaml:"read_timeout" env:"HTTP_SERVER_READ_TIME_OUT"`
+	WriteTimeout   time.Duration `yaml:"write_timeout" env:"HTTP_SERVER_WRITE_TIME_OUT"`
+	MaxHeaderBytes int           `yaml:"max_header_bytes" env:"HTTP_SERVER_MAX_HEADER"`
 }
 
 type GRPCServer struct {
@@ -49,12 +53,25 @@ type GatewayServer struct {
 	Address string `yaml:"address" env:"GATEWAY_SERVER_ADDRESS"`
 }
 
-func InitConfig() Config {
+// InitConfig - load config. Set "product" or "local" configuration level.
+func InitConfig(layer string) *Config {
+	switch layer {
+	case "product":
+		layer = product
+	case "local":
+		layer = local
+	}
+
 	var cfg Config
-	if err := cleanenv.ReadConfig(configPath, &cfg); err != nil {
-		logrus.Error("error read config")
+
+	if err := cleanenv.ReadConfig(layer, &cfg); err != nil {
+		logrus.Error("error reading config from file")
 		panic(err)
 	}
 
-	return cfg
+	if cfg.SaltHash == "" || cfg.JwtSigning == "" {
+		logrus.Fatalf("JWT_SIGNING or SALT_HASH is empty")
+	}
+
+	return &cfg
 }

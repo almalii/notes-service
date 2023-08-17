@@ -44,6 +44,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/sirupsen/logrus"
+	_ "net/http/pprof"
 )
 
 const (
@@ -71,6 +72,8 @@ func NewApp(ctx context.Context, cfg config.Config) *App {
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.Timeout(requestTimeout))
+
+	router.Mount("/debug", middleware.Profiler())
 
 	router.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL(swaggerURL)))
 
@@ -150,9 +153,9 @@ func (a *App) Start(ctx context.Context) error {
 	httpServer := &http.Server{
 		Addr:           a.cfg.HTTPServer.Address,
 		Handler:        a.router,
-		ReadTimeout:    5 * time.Second,
-		WriteTimeout:   5 * time.Second,
-		MaxHeaderBytes: 1 << 20,
+		ReadTimeout:    a.cfg.HTTPServer.ReadTimeout,
+		WriteTimeout:   a.cfg.HTTPServer.WriteTimeout,
+		MaxHeaderBytes: a.cfg.HTTPServer.MaxHeaderBytes,
 	}
 
 	go func() {
