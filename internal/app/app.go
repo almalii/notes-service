@@ -2,22 +2,24 @@ package app
 
 import (
 	"context"
+	"net"
+	"net/http"
+	_ "net/http/pprof"
+	"os"
+	"os/signal"
+	"time"
+
 	pb_auth_service "github.com/almalii/grpc-contracts/gen/go/auth_service/service/v1"
 	pb_notes_service "github.com/almalii/grpc-contracts/gen/go/notes_service/service/v1"
 	pb_users_service "github.com/almalii/grpc-contracts/gen/go/users_service/service/v1"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	"net"
-	"net/http"
 	authControllerGRPC "notes-rew/internal/auth_service/controller/grpc/v1"
 	"notes-rew/internal/db/redis"
 	"notes-rew/internal/middlewares"
 	notesControllerGRPC "notes-rew/internal/notes_service/controller/grpc/v1"
 	usersControllerGRPC "notes-rew/internal/users_service/controller/grpc/v1"
-	"os"
-	"os/signal"
-	"time"
 
 	"github.com/go-playground/validator/v10"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -27,7 +29,6 @@ import (
 	authStorage "notes-rew/internal/auth_service/storage/postgres"
 	authUsecase "notes-rew/internal/auth_service/usecase"
 	"notes-rew/internal/config"
-	"notes-rew/internal/db/migrations"
 	"notes-rew/internal/db/postgres"
 	"notes-rew/internal/hash"
 	notesController "notes-rew/internal/notes_service/controller/rest/handler"
@@ -44,7 +45,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/sirupsen/logrus"
-	_ "net/http/pprof"
 )
 
 const (
@@ -84,7 +84,7 @@ func NewApp(ctx context.Context, cfg config.Config) *App {
 		logrus.Fatalf("Failed to connect to DB: %+v", err)
 	}
 
-	if err = migrations.UpMigrations(cfg); err != nil {
+	if err = postgres.UpMigrations(cfg); err != nil {
 		logrus.Errorf("Failed to migrate: %+v", err)
 	}
 

@@ -1,6 +1,23 @@
 version: "3.9"
 
 services:
+  go-app:
+    build: .
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+      - "8082:8082"
+    environment:
+      - HTTP_SERVER_ADDRESS=0.0.0.0:8081
+      - CONFIG_PATH=config.yml
+      - SALT_HASH=d2h4u1NJ0GF3fdJl
+      - JWT_SIGNING=sf54dvlDkJzp9aKv5bH
+      - DB_PASSWORD=hesoyam321!
+      - REDIS_PASSWORD=hesoyam321!
+    depends_on:
+      - ns-postgres
+      - ns-redis
+
   ns-postgres:
     image: postgres:latest
     ports:
@@ -9,24 +26,8 @@ services:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: hesoyam321!
       POSTGRES_DB: notes
-    volumes:
-      - ./postgres-data:/var/lib/postgresql/data
 
   ns-redis:
     image: redis:latest
     ports:
       - "6379:6379"
-
-  go-app:
-    build: .
-    command: ./cmd/main
-    ports:
-      - "8080:8080"
-    environment:
-        - SALT_HASH=d2h4u1NJ0GF3fdJl
-        - JWT_SIGNING=sf54dvlDkJzp9aKv5bH
-        - DB_PASSWORD=hesoyam321!
-        - REDIS_PASSWORD=hesoyam321!
-    depends_on:
-      - ns-postgres
-      - ns-redis

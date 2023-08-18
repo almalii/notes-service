@@ -1,4 +1,4 @@
 *.DS_Store
 .idea/
 *.env
-./config/local.yml
+/config/local.yml

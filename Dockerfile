@@ -1,9 +1,16 @@
-FROM golang:1.21
+FROM golang:1.21-alpine AS builder
 
 WORKDIR /notes-app
 
-COPY . .
+COPY ["go.mod", "go.sum", "./"]
+RUN go mod download
 
-RUN go build -o ./cmd/main ./cmd/
+COPY . ./
+RUN go build -o ./cmd/app ./cmd/
 
-CMD ["./cmd/main"]
+FROM alpine
+
+COPY --from=builder /notes-app/cmd/app /
+COPY config/prod.yml /config.yml
+
+CMD ["/app"]
