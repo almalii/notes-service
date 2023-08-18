@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"net/http"
-	"notes-rew/internal/auth_service/controller"
 	"notes-rew/internal/auth_service/models"
 	"notes-rew/internal/auth_service/usecase"
 )
@@ -44,7 +43,7 @@ func (c *AuthController) Register(r chi.Router) {
 func (c *AuthController) SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var req controller.SignUpRequest
+	var req SignUpRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logrus.Errorf("error decoding request: %v", err)
@@ -67,7 +66,7 @@ func (c *AuthController) SignUpHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := controller.NewSignUpResponse(userID)
+	resp := NewSignUpResponse(userID)
 
 	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
@@ -91,7 +90,7 @@ func (c *AuthController) SignUpHandler(w http.ResponseWriter, r *http.Request) {
 func (c *AuthController) SignInHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var req controller.SignInRequest
+	var req SignInRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logrus.Errorf("error decoding request: %v", err)

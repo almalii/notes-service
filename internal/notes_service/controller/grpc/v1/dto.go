@@ -7,8 +7,6 @@ import (
 	"notes-rew/internal/notes_service/usecase"
 )
 
-// todo перенести в controller (в grpc или в rest)
-
 func NewCreateNoteInput(currentUser uuid.UUID, req *pb_notes_model.CreateNoteRequest) usecase.CreateNoteInput {
 	return usecase.CreateNoteInput{
 		Title:  req.Title,

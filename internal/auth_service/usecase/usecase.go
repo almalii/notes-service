@@ -65,11 +65,9 @@ func (u *AuthUsecase) AuthenticateUser(ctx context.Context, req AuthInput) (*mod
 		return nil, err
 	}
 
-	resp := models.AuthResponse{
-		Token: jwt,
-	}
+	resp := NewAuthResponse(jwt)
 
-	return &resp, nil
+	return resp, nil
 }
 
 func NewAuthUsecase(service AuthService, hasher hash.Hasher, tokenManager *token_manager.TokenManager) *AuthUsecase {

@@ -22,6 +22,11 @@ services:
     command: ./cmd/main
     ports:
       - "8080:8080"
+    environment:
+        - SALT_HASH=d2h4u1NJ0GF3fdJl
+        - JWT_SIGNING=sf54dvlDkJzp9aKv5bH
+        - DB_PASSWORD=hesoyam321!
+        - REDIS_PASSWORD=hesoyam321!
     depends_on:
       - ns-postgres
       - ns-redis

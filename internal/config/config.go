@@ -8,7 +8,7 @@ import (
 
 const (
 	product = "./config/prod.yml"
-	local   = "./config/local.yml"
+	local   = "../config/local.yml"
 )
 
 type Config struct {
@@ -50,7 +50,10 @@ type GRPCServer struct {
 }
 
 type GatewayServer struct {
-	Address string `yaml:"address" env:"GATEWAY_SERVER_ADDRESS"`
+	Address        string        `yaml:"address" env:"GATEWAY_SERVER_ADDRESS"`
+	ReadTimeout    time.Duration `yaml:"read_timeout" env:"GATEWAY_SERVER_READ_TIME_OUT"`
+	WriteTimeout   time.Duration `yaml:"write_timeout" env:"GATEWAY_SERVER_WRITE_TIME_OUT"`
+	MaxHeaderBytes int           `yaml:"max_header_bytes" env:"GATEWAY_SERVER_MAX_HEADER"`
 }
 
 // InitConfig - load config. Set "product" or "local" configuration level.
@@ -60,6 +63,8 @@ func InitConfig(layer string) *Config {
 		layer = product
 	case "local":
 		layer = local
+	default:
+		logrus.Fatalf("unknown config layer: %s", layer)
 	}
 
 	var cfg Config

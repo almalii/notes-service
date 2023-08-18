@@ -218,8 +218,11 @@ func (a *App) StartGateway(ctx context.Context) error {
 	}
 
 	httpServer := &http.Server{
-		Addr:    a.cfg.GatewayServer.Address,
-		Handler: middlewares.HttpInterceptor(a.tokenManager, a.mux),
+		Addr:           a.cfg.GatewayServer.Address,
+		Handler:        middlewares.HttpInterceptor(a.tokenManager, a.mux),
+		ReadTimeout:    a.cfg.GatewayServer.ReadTimeout,
+		WriteTimeout:   a.cfg.GatewayServer.WriteTimeout,
+		MaxHeaderBytes: a.cfg.GatewayServer.MaxHeaderBytes,
 	}
 
 	logrus.Println("gRPC-Gateway server started on address:", a.cfg.GatewayServer.Address)

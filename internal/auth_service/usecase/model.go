@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"github.com/google/uuid"
+	"notes-rew/internal/auth_service/models"
 	"notes-rew/internal/auth_service/service"
 	"time"
 )
@@ -25,5 +26,11 @@ func NewUserOutput(username, email, passwordHash string) service.CreateUser {
 		PasswordHash: passwordHash,
 		CreatedAt:    time.Now().UTC(),
 		UpdatedAt:    time.Now().UTC(),
+	}
+}
+
+func NewAuthResponse(token string) *models.AuthResponse {
+	return &models.AuthResponse{
+		Token: token,
 	}
 }

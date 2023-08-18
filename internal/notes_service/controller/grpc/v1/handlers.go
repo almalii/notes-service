@@ -14,6 +14,8 @@ import (
 	"notes-rew/internal/notes_service/usecase"
 )
 
+const userIDKey = "userID"
+
 type NoteUsecase interface {
 	CreateNote(ctx context.Context, req usecase.CreateNoteInput) (uuid.UUID, error)
 	ReadNote(ctx context.Context, noteID, currentUserID uuid.UUID) (*models.NoteOutput, error)
@@ -33,7 +35,7 @@ func (n *NotesServer) CreateNote(
 	req *pb_notes_model.CreateNoteRequest,
 ) (*pb_notes_model.NoteIDResponse, error) {
 
-	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
+	currentUserID, ok := ctx.Value(userIDKey).(uuid.UUID)
 	if !ok {
 		logrus.Error("error getting user id from context")
 		return nil, status.Error(codes.Internal, "error getting user id")
@@ -64,7 +66,7 @@ func (n *NotesServer) GetNote(
 
 	noteID := NewGetNoteInput(req)
 
-	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
+	currentUserID, ok := ctx.Value(userIDKey).(uuid.UUID)
 	if !ok {
 		logrus.Error("error getting user id from context")
 		return nil, status.Error(codes.Internal, "error getting user id")
@@ -86,7 +88,7 @@ func (n *NotesServer) GetNotes(
 	req *pb_notes_model.AuthorIDRequest,
 ) (*pb_notes_model.NoteResponseList, error) {
 
-	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
+	currentUserID, ok := ctx.Value(userIDKey).(uuid.UUID)
 	if !ok {
 		logrus.Error("error getting user id from context")
 		return nil, status.Error(codes.Internal, "error getting user id")
@@ -111,7 +113,7 @@ func (n *NotesServer) UpdateNote(
 	input := NewUpdateNoteInput(req)
 	noteID := NewCurrentNoteID(req)
 
-	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
+	currentUserID, ok := ctx.Value(userIDKey).(uuid.UUID)
 	if !ok {
 		logrus.Error("error getting user id from context")
 		return nil, status.Error(codes.Internal, "error getting user id")
@@ -146,7 +148,7 @@ func (n *NotesServer) DeleteNote(
 
 	noteID := NewDeleteNoteInput(req)
 
-	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
+	currentUserID, ok := ctx.Value(userIDKey).(uuid.UUID)
 	if !ok {
 		logrus.Error("error getting user id from context")
 		return nil, status.Error(codes.Internal, "error getting user id")

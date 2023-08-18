@@ -56,19 +56,10 @@ func (s *AuthServer) SignIn(ctx context.Context, req *pb_model.SignInRequest) (*
 		logrus.Error("password is not correct")
 		return nil, status.Errorf(codes.Unauthenticated, "password is not correct")
 	}
+	
+	resp := NewSignInResponse(authData.Token)
 
-	resp := pb_model.SignInResponse{
-		Token: authData.Token,
-	}
-
-	// TODO: оставить заголовок? или это сделает фронт?
-	//err = grpc.SetHeader(ctx, metadata.New(map[string]string{"Authorization": authData.Token}))
-	//if err != nil {
-	//	logrus.Errorf("error set header: %v", err)
-	//	return nil, status.Errorf(codes.Internal, "error set header")
-	//}
-
-	return &resp, nil
+	return resp, nil
 }
 
 func NewAuthServer(

@@ -11,9 +11,10 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"notes-rew/internal/users_service/models"
-	"notes-rew/internal/users_service/models/dto"
 	"notes-rew/internal/users_service/usecase"
 )
+
+const userIDKey = "userID"
 
 type UserUsecase interface {
 	ReadUser(ctx context.Context, id uuid.UUID) (models.UserOutput, error)
@@ -32,7 +33,7 @@ func (u *UsersServer) GetUser(
 	req *pb_users_model.UserIDRequest,
 ) (*pb_users_model.GetUserResponse, error) {
 
-	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
+	currentUserID, ok := ctx.Value(userIDKey).(uuid.UUID)
 	if !ok {
 		logrus.Error("error getting user id from context")
 		return nil, status.Error(codes.Internal, "error getting user id")
@@ -44,7 +45,7 @@ func (u *UsersServer) GetUser(
 		return nil, err
 	}
 
-	resp := dto.NewGetUserResponse(user)
+	resp := NewGetUserResponse(user)
 
 	return resp, nil
 }
@@ -54,7 +55,7 @@ func (u *UsersServer) UpdateUser(
 	req *pb_users_model.UpdateUserRequest,
 ) (*pb_users_model.UpdateUserResponse, error) {
 
-	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
+	currentUserID, ok := ctx.Value(userIDKey).(uuid.UUID)
 	if !ok {
 		logrus.Error("error getting user id from context")
 		return nil, status.Error(codes.Internal, "error getting user id")
@@ -66,7 +67,7 @@ func (u *UsersServer) UpdateUser(
 		return nil, status.Error(codes.Internal, "error getting user")
 	}
 
-	input := dto.NewUpdateUserInput(req)
+	input := NewUpdateUserInput(req)
 
 	if err = u.validator.Struct(req); err != nil {
 		logrus.Error(err.(validator.ValidationErrors))
@@ -79,7 +80,7 @@ func (u *UsersServer) UpdateUser(
 		return nil, status.Error(codes.Internal, "error updating user")
 	}
 
-	resp := dto.NewUpdateUserResponse(input)
+	resp := NewUpdateUserResponse(input)
 
 	return resp, nil
 }
@@ -89,7 +90,7 @@ func (u *UsersServer) DeleteUser(
 	req *pb_users_model.UserIDRequest,
 ) (*emptypb.Empty, error) {
 
-	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
+	currentUserID, ok := ctx.Value(userIDKey).(uuid.UUID)
 	if !ok {
 		logrus.Error("error getting user id from context")
 		return nil, status.Error(codes.Internal, "error getting user id")

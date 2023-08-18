@@ -10,10 +10,11 @@ import (
 	"net/http"
 	"notes-rew/internal/middlewares"
 	"notes-rew/internal/token_manager"
-	"notes-rew/internal/users_service/controller"
 	"notes-rew/internal/users_service/models"
 	"notes-rew/internal/users_service/usecase"
 )
+
+const userIDKey = "userID"
 
 type UserUsecase interface {
 	ReadUser(ctx context.Context, id uuid.UUID) (models.UserOutput, error)
@@ -51,7 +52,7 @@ func (c *UserController) Register(r chi.Router) {
 func (c *UserController) GetUserHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
+	currentUserID, ok := ctx.Value(userIDKey).(uuid.UUID)
 	if !ok {
 		logrus.Error("error reading id from context")
 		http.Error(w, "error reading id", http.StatusNotFound)
@@ -90,7 +91,7 @@ func (c *UserController) UpdateUserHandler(w http.ResponseWriter, r *http.Reques
 
 	ctx := r.Context()
 
-	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
+	currentUserID, ok := ctx.Value(userIDKey).(uuid.UUID)
 	if !ok {
 		logrus.Error("error reading id from context")
 		http.Error(w, "error reading id", http.StatusNotFound)
@@ -104,7 +105,7 @@ func (c *UserController) UpdateUserHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	var req controller.UpdateUserRequest
+	var req UpdateUserRequest
 
 	if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logrus.Error(err)
@@ -149,7 +150,7 @@ func (c *UserController) UpdateUserHandler(w http.ResponseWriter, r *http.Reques
 func (c *UserController) DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
+	currentUserID, ok := ctx.Value(userIDKey).(uuid.UUID)
 	if !ok {
 		logrus.Error("error reading id from context")
 		http.Error(w, "error reading id", http.StatusNotFound)

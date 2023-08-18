@@ -10,11 +10,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"notes-rew/internal/middlewares"
-	"notes-rew/internal/notes_service/controller"
 	"notes-rew/internal/notes_service/models"
 	"notes-rew/internal/notes_service/usecase"
 	"notes-rew/internal/token_manager"
 )
+
+const userIDKey = "userID"
 
 type NoteUsecase interface {
 	CreateNote(ctx context.Context, req usecase.CreateNoteInput) (uuid.UUID, error)
@@ -56,15 +57,14 @@ func (c *NoteController) Register(r chi.Router) {
 func (c *NoteController) CreateNoteHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// todo вынести в метод, константа
-	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
+	currentUserID, ok := ctx.Value(userIDKey).(uuid.UUID)
 	if !ok {
 		logrus.Error("error reading id from context")
 		http.Error(w, "error reading id", http.StatusNotFound)
 		return
 	}
 
-	var req controller.CreateNoteRequest
+	var req CreateNoteRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logrus.Error(err)
@@ -87,11 +87,7 @@ func (c *NoteController) CreateNoteHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	resp := controller.NoteResponse{
-		ID:    noteID,
-		Title: domain.Title,
-		Body:  domain.Body,
-	}
+	resp := NewNoteResponse(noteID, domain.Title, domain.Body)
 
 	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
@@ -116,7 +112,7 @@ func (c *NoteController) CreateNoteHandler(w http.ResponseWriter, r *http.Reques
 func (c *NoteController) GetNoteHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
+	currentUserID, ok := ctx.Value(userIDKey).(uuid.UUID)
 	if !ok {
 		logrus.Error("error reading id from context")
 		http.Error(w, "error reading id", http.StatusNotFound)
@@ -159,7 +155,7 @@ func (c *NoteController) GetNoteHandler(w http.ResponseWriter, r *http.Request) 
 func (c *NoteController) GetAllNotesHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
+	currentUserID, ok := ctx.Value(userIDKey).(uuid.UUID)
 	if !ok {
 		logrus.Error("error reading id from context")
 		http.Error(w, "error reading id", http.StatusNotFound)
@@ -196,7 +192,7 @@ func (c *NoteController) GetAllNotesHandler(w http.ResponseWriter, r *http.Reque
 func (c *NoteController) UpdateNoteHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
+	currentUserID, ok := ctx.Value(userIDKey).(uuid.UUID)
 	if !ok {
 		logrus.Error("error reading id from context")
 		http.Error(w, "error reading id", http.StatusNotFound)
@@ -216,7 +212,7 @@ func (c *NoteController) UpdateNoteHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	var req controller.UpdateNoteRequest
+	var req UpdateNoteRequest
 
 	if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logrus.Error(err)
@@ -261,7 +257,7 @@ func (c *NoteController) UpdateNoteHandler(w http.ResponseWriter, r *http.Reques
 func (c *NoteController) DeleteNoteHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	currentUserID, ok := ctx.Value("userID").(uuid.UUID)
+	currentUserID, ok := ctx.Value(userIDKey).(uuid.UUID)
 	if !ok {
 		logrus.Error("error reading id from context")
 		http.Error(w, "error reading id", http.StatusNotFound)
