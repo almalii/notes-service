@@ -12,6 +12,9 @@ import (
 	pb_auth_service "github.com/almalii/grpc-contracts/gen/go/auth_service/service/v1"
 	pb_notes_service "github.com/almalii/grpc-contracts/gen/go/notes_service/service/v1"
 	pb_users_service "github.com/almalii/grpc-contracts/gen/go/users_service/service/v1"
+	"github.com/almalii/swagger-contracts/restapi"
+	"github.com/almalii/swagger-contracts/restapi/operations"
+	"github.com/go-openapi/loads"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -68,6 +71,66 @@ type App struct {
 }
 
 func NewApp(ctx context.Context, cfg config.Config) *App {
+	spec, err := loads.Embedded(restapi.SwaggerJSON, restapi.FlatSwaggerJSON)
+	if err != nil {
+		logrus.Fatal(err)
+	}
+
+	api := operations.NewNotesAPIAPI(spec)
+	swaggerServer := restapi.NewServer(api)
+
+	// api.Logger = logging.L(context.Background()).Sugar().Infof
+	//
+	// api.ProjectsCreateProjectHandler = projects.CreateProjectHandlerFunc(func(
+	// 	params projects.CreateProjectParams,
+	// 	principal interface{},
+	// ) middleware.Responder {
+	// 	logging.WithFields(
+	// 		ctx,
+	// 		logging.AnyField("project", params),
+	// 		logging.AnyField("principal", principal),
+	// 	).Info("create project")
+	//
+	// 	return projects.NewCreateProjectCreated()
+	// })
+	// api.BearerAuthAuth = func(s string) (interface{}, error) {
+	// 	if !strings.HasPrefix(s, BearerPrefix) {
+	// 		return nil, fmt.Errorf("has not bearer token")
+	// 	}
+	// 	if s = strings.TrimPrefix(s, BearerPrefix); len(s) == 0 {
+	// 		return nil, fmt.Errorf("bearer token is empty")
+	// 	}
+	//
+	// 	return &model.AuthorizedUser{
+	// 		ID:    "123",
+	// 		Roles: model.AllRoles,
+	// 	}, nil
+	// }
+	//
+	// err = api.Validate()
+	// if err != nil {
+	// 	return App{}, err
+	// }
+	//
+	// handler := api.Serve(nil)
+	//
+	// // Server
+	// server := restapi.NewServer(api)
+	// server.EnabledListeners = []string{"http"}
+	// server.Host = cfg.HTTPServers.BackofficeAPI.IP
+	// server.Port = cfg.HTTPServers.BackofficeAPI.Port
+	//
+	// router := chi.NewRouter()
+	// router.Use(chi_middleware.RealIP)
+	// router.Use(chi_middleware.Logger)
+	// router.Use(chi_middleware.URLFormat)
+	// router.Use(tracing.Middleware)
+	// router.Use(logging.Middleware)
+	//
+	// router.Mount("/", handler)
+	//
+	// server.SetHandler(router)
+
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)

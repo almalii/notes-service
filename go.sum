@@ -14,6 +14,8 @@ github.com/almalii/grpc-contracts/gen/go/notes_service v0.0.0-20230802071549-a98
 github.com/almalii/grpc-contracts/gen/go/notes_service v0.0.0-20230802071549-a98d1db78475/go.mod h1:21a4j2psxf7ONxswDhXjJE4RShp1Wgu9t5KWdbuoWk8=
 github.com/almalii/grpc-contracts/gen/go/users_service v0.0.0-20230802071549-a98d1db78475 h1:XVyaHObhX9uCDrisUMCApU5BJydvkoj4ymTwmHA1X9c=
 github.com/almalii/grpc-contracts/gen/go/users_service v0.0.0-20230802071549-a98d1db78475/go.mod h1:Ny+8InKHjz86Z5IpG5ysGkQXESyDr6t+ykyP8Vc23y4=
+github.com/almalii/swagger-contracts v1.0.0 h1:ORQUvexmBxO+qg2dKjqavhRyDujBi039+AiJec896Zc=
+github.com/almalii/swagger-contracts v1.0.0/go.mod h1:TlKyoH9qNL6UD5qMfIl6xUEkDawj+9pkvFDOXAIgygc=
 github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef/go.mod h1:WaHUgvxTVq04UNunO+XhnAqY/wQc+bxr74GqbsZ/Jqw=
 github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 h1:DklsrG3dyBCFEj5IhUbnKptjxatkF07cF2ak3yi77so=
 github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2/go.mod h1:WaHUgvxTVq04UNunO+XhnAqY/wQc+bxr74GqbsZ/Jqw=
