@@ -1,14 +1,13 @@
 package config
 
 import (
+	"flag"
+	"os"
+	"sync"
+	"time"
+
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/sirupsen/logrus"
-	"time"
-)
-
-const (
-	product = "./config/prod.yml"
-	local   = "../config/local.yml"
 )
 
 type Config struct {
@@ -56,27 +55,46 @@ type GatewayServer struct {
 	MaxHeaderBytes int           `yaml:"max_header_bytes" env:"GATEWAY_SERVER_MAX_HEADER"`
 }
 
-// InitConfig - load config. Set "product" or "local" configuration level.
-func InitConfig(layer string) *Config {
-	switch layer {
-	case "product":
-		layer = product
-	case "local":
-		layer = local
-	default:
-		logrus.Fatalf("unknown config layer: %s", layer)
-	}
+const (
+	FlagConfigPathName = "config"
+	EnvConfigPathName  = "CONFIG_PATH"
+)
 
-	var cfg Config
+var (
+	once       sync.Once
+	instance   Config
+	configPath string
+)
 
-	if err := cleanenv.ReadConfig(layer, &cfg); err != nil {
-		logrus.Error("error reading config from file")
-		panic(err)
-	}
+// InitConfig - load config.
+func InitConfig() *Config {
+	once.Do(func() {
+		flag.StringVar(
+			&configPath,
+			FlagConfigPathName,
+			"",
+			"config path",
+		)
+		flag.Parse()
 
-	if cfg.SaltHash == "" || cfg.JwtSigning == "" {
-		logrus.Fatalf("JWT_SIGNING or SALT_HASH is empty")
-	}
+		if path, ok := os.LookupEnv(EnvConfigPathName); ok {
+			configPath = path
+		}
 
-	return &cfg
+		if configPath == "" {
+			logrus.Fatalf("config path required")
+		}
+
+		instance = Config{}
+
+		if err := cleanenv.ReadConfig(configPath, &instance); err != nil {
+			logrus.WithField("path", configPath).Fatal(err)
+		}
+
+		if instance.SaltHash == "" || instance.JwtSigning == "" {
+			logrus.Fatalf("JWT_SIGNING or SALT_HASH is empty")
+		}
+	})
+
+	return &instance
 }

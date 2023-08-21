@@ -3,8 +3,12 @@ package main
 import (
 	"context"
 	"encoding/gob"
-	"notes-rew/internal/app"
+	"fmt"
+	"path"
+	"runtime"
 	"sync"
+
+	"notes-rew/internal/app"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -23,9 +27,21 @@ import (
 // @name Authorization
 func main() {
 	gob.Register(uuid.UUID{})
-	logrus.SetFormatter(&logrus.JSONFormatter{})
 
-	cfg := config.InitConfig("local")
+	logrus.SetReportCaller(true)
+	logrus.SetFormatter(&logrus.TextFormatter{
+		CallerPrettyfier: func(f *runtime.Frame) (string, string) {
+			filename := path.Base(f.File)
+			return fmt.Sprintf("%s:%d", filename, f.Line), fmt.Sprintf("%s()", f.Function)
+		},
+		DisableColors: false,
+		FullTimestamp: true,
+	})
+
+	cfg := config.InitConfig()
+
+	logrus.Info("cfg.SaltHash", cfg.SaltHash)
+
 	ctx := context.Background()
 
 	newApp := app.NewApp(ctx, *cfg)
