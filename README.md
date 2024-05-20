@@ -31,5 +31,3 @@ The NotesService project is developed using a multi-tier architecture, which ens
 - **DELETE /notes/{id}** - Deletes a note with the specified ID. Requires authentication using session.
 
 Please note that all endpoints requiring authentication utilize the SessionMiddleware middleware.
-
-сделай нормальное ридми
